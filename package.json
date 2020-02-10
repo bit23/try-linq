@@ -1,0 +1,15 @@
+{
+  "name": "try-linq",
+  "version": "1.0.0",
+  "description": "",
+  "main": "assets/scripts/TryLinqApp.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^3.7.4"
+  }
+}

@@ -1,0 +1,44 @@
+.dark-theme .app-page-toolbar {
+    background-color: #414141;
+}
+
+.dark-theme .app-page-toolbar .jui-toolbar-item-separator {
+    background-color: #414141;
+}
+
+.dark-theme .app-toolbar-icon-svg {
+    fill: #eee;
+}
+
+.dark-theme .app-toolbar-icon-font {
+    color: #eee;
+}
+
+.dark-theme .app-page-footer {
+    background-color: #161616;
+}
+
+.dark-theme .app-panel-icon {
+    color: #ddd;
+}
+
+.dark-theme .app-tool-panel {
+    border-left: 1px solid #222;
+}
+
+.dark-theme .app-tool-panel-toolbar {
+    background-color: #2e2e2e;
+    border-bottom: 1px solid #262626;
+}
+
+.dark-theme .jui-toolbar-item-separator {
+    background-color: #262626;
+}
+
+.dark-theme .app-code-panel-footer {
+    background-color: #1e1e1e;
+}
+
+.dark-theme .app-panels-layout>.layout-panel {
+    border-bottom: 1px solid #2a2a2a;
+}

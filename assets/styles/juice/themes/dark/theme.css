@@ -1,0 +1,198 @@
+/* #################### scrollbars #################### */
+
+.dark-theme ::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    background-color: transparent;
+}
+
+.dark-theme ::-webkit-scrollbar {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark-theme ::-webkit-scrollbar-thumb {
+    background-color: #666;
+}
+
+.dark-theme ::-webkit-scrollbar-corner {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+
+/* #################### .jui-app #################### */
+
+.jui-app.dark-theme {
+    background-color: #1a1a1a;
+    color: #fff;
+}
+
+
+/* #################### .jui-accordion #################### */
+
+.dark-theme .jui-accordion-header {
+    border: 1px solid #1a1a1a;
+    background: #333;
+}
+
+.dark-theme .jui-accordion-symbol {
+    color: #ddd;
+}
+
+.dark-theme .jui-accordion-container {
+    border-left: 1px solid #1a1a1a;
+    border-right: 1px solid #1a1a1a;
+    border-bottom: 1px solid #1a1a1a;
+}
+
+
+/* #################### .jui-button #################### */
+
+.dark-theme .jui-button {
+    border: 1px solid #006ab6;
+    border-bottom: 1px solid #005c9e;
+    background-color: #006ab6;
+    color: #f0f0f0;
+}
+
+.dark-theme .jui-button:hover {
+    border-color: #0094ff;
+    border-bottom-color: #007ed9;
+    background-color: #0094ff;
+    color: #fff;
+    box-shadow: 0px 0px 2px 2px rgba(45, 165, 252, 0.2);
+}
+
+.dark-theme .jui-button:disabled {
+    border-color: #2e2e2e;
+    background-color: #2e2e2e;
+    color: #666;
+    box-shadow: none;
+}
+
+.dark-theme .jui-button:disabled:hover {
+    border-color: #2e2e2e;
+    background-color: #2e2e2e;
+    color: #666;
+    box-shadow: none;
+}
+
+
+/* #################### .jui-dialog #################### */
+
+.dark-theme .jui-dialog {
+    background-color: #1a1a1a;
+    box-shadow: 0px 0px 5px 5px rgba(0, 0, 0, 0.2);
+    border: 1px solid #333;
+}
+
+.dark-theme .jui-dialog-header {
+    border-bottom: 2px solid #1a1a1a;
+    background-color: #222;
+}
+
+
+/* .dark-theme .jui-dialog-content { } */
+
+
+/* .dark-theme .jui-dialog-buttons { } */
+
+.dark-theme .jui-dialog-mask {
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+
+/* .dark-theme .jui-dialog.modal .jui-dialog-buttons>.jui-button { } */
+
+
+/* #################### .jui-table-view #################### */
+
+.dark-theme .jui-table-view thead {
+    background-color: #2e2e2e;
+}
+
+.dark-theme .jui-table-view th {
+    color: #ddd;
+}
+
+.dark-theme .jui-table-view th.index {
+    color: #aaa;
+}
+
+.dark-theme .jui-table-view td {
+    color: #eee;
+    background-color: #111;
+}
+
+.dark-theme .jui-table-view td.index {
+    background-color: #2e2e2e;
+    color: #999;
+}
+
+
+/* #################### .jui-toolbar #################### */
+
+
+/* .dark-theme .jui-toolbar-label { } */
+
+.dark-theme .jui-toolbar-icon-font {
+    color: #eee;
+}
+
+.dark-theme .jui-toolbar-icon-svg {
+    fill: #eee;
+}
+
+
+/* .dark-theme .jui-toolbar-items { } */
+
+
+/* .dark-theme .jui-toolbar-item-separator { } */
+
+.dark-theme .jui-toolbar-button {
+    color: #ddd;
+    background-color: transparent;
+}
+
+.dark-theme .jui-toolbar-button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #eee;
+}
+
+.dark-theme .jui-toolbar-button.active {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: #eee;
+}
+
+.dark-theme .jui-toolbar-button:disabled {
+    color: #777;
+}
+
+.dark-theme .jui-toolbar-button:disabled:hover {
+    background-color: transparent;
+}
+
+.dark-theme .jui-toolbar-button.active:disabled {
+    background-color: transparent;
+}
+
+.dark-theme .jui-toolbar-button.active:disabled:hover {
+    background-color: transparent;
+}
+
+
+/* .dark-theme .jui-toolbar-menu-button { } */
+
+.dark-theme .jui-toolbar-menu-button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.dark-theme .jui-toolbar-menu-button:disabled {
+    background-color: transparent;
+}
+
+.dark-theme .jui-toolbar-menu-button:disabled>.jui-toolbar-icon-svg {
+    fill: #777;
+}
+
+.dark-theme .jui-toolbar-menu-button:disabled:hover {
+    background-color: transparent;
+}

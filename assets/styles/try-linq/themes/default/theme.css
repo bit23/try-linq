@@ -1,0 +1,46 @@
+.app-page-toolbar {
+    background-color: #909090;
+    color: #fff;
+}
+
+.app-page-toolbar .jui-toolbar-item-separator {
+    background-color: #999999;
+}
+
+.app-toolbar-icon-svg {
+    fill: #eee;
+}
+
+.app-toolbar-icon-font {
+    color: #eee;
+}
+
+.app-page-footer {
+    background-color: #909090;
+    color: #eee;
+}
+
+.app-panel-icon {
+    color: #444;
+}
+
+.app-tool-panel {
+    border-left: 1px solid #e8e8e8;
+}
+
+.app-tool-panel-toolbar {
+    background-color: #f8f8f8;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.jui-toolbar-item-separator {
+    background-color: #eaeaea;
+}
+
+.app-code-panel-footer {
+    background-color: #f0f0f0;
+}
+
+.app-panels-layout>.layout-panel {
+    border-bottom: 1px solid #e6e6e6;
+}

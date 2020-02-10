@@ -1,0 +1,186 @@
+/* #################### scrollbars #################### */
+
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    background-color: transparent;
+}
+
+::-webkit-scrollbar {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+::-webkit-scrollbar-thumb {
+    background-color: #999;
+}
+
+::-webkit-scrollbar-corner {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+
+/* #################### .jui-app #################### */
+
+.jui-app {
+    background-color: #fff;
+    color: #111;
+}
+
+
+/* #################### .jui-accordion #################### */
+
+.jui-accordion-header {
+    border: 1px solid #ccc;
+    background: #eee;
+}
+
+.jui-accordion-symbol {
+    color: #777;
+}
+
+.jui-accordion-container {
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+}
+
+
+/* #################### .jui-button #################### */
+
+.jui-button {
+    border: 1px solid #006ab6;
+    border-bottom: 1px solid #005c9e;
+    background-color: #006ab6;
+    color: #f0f0f0;
+}
+
+.jui-button:hover {
+    border-color: #0094ff;
+    border-bottom-color: #007ed9;
+    background-color: #0094ff;
+    color: #fff;
+    box-shadow: 0px 0px 2px 2px rgba(45, 165, 252, 0.2);
+}
+
+.jui-button:disabled {
+    border-color: #bbb;
+    background-color: #bbb;
+    color: #888;
+    box-shadow: none;
+}
+
+.jui-button:disabled:hover {
+    border-color: #bbb;
+    background-color: #bbb;
+    color: #888;
+    box-shadow: none;
+}
+
+
+/* #################### .jui-dialog #################### */
+
+.jui-dialog {
+    background-color: #fff;
+    box-shadow: 0px 0px 5px 5px rgba(0, 0, 0, 0.07);
+    border: 1px solid #c0c0c0;
+}
+
+.jui-dialog-header {
+    border-bottom: 2px solid #fff;
+    background-color: #f0f0f0;
+}
+
+
+/* .jui-dialog-content { } */
+
+
+/* .jui-dialog-buttons { } */
+
+.jui-dialog-mask {
+    background-color: rgba(255, 255, 255, 0.5);
+}
+
+
+/* .jui-dialog.modal .jui-dialog-buttons>.jui-button { } */
+
+
+/* #################### .jui-table-view #################### */
+
+
+/* .jui-table-view th { } */
+
+.jui-table-view th.index {
+    color: #666;
+}
+
+
+/* .jui-table-view td { } */
+
+.jui-table-view td.index {
+    color: #999;
+}
+
+
+/* #################### .jui-toolbar #################### */
+
+
+/* .jui-toolbar-label { } */
+
+
+/* .jui-toolbar-icon-font {} */
+
+.jui-toolbar-icon-svg {
+    fill: #111;
+}
+
+
+/* .jui-toolbar-items { } */
+
+
+/* .jui-toolbar-item-separator { } */
+
+.jui-toolbar-button {
+    background-color: transparent;
+}
+
+.jui-toolbar-button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.jui-toolbar-button.active {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.jui-toolbar-button:disabled {
+    color: #999;
+}
+
+.jui-toolbar-button:disabled:hover {
+    background-color: transparent;
+}
+
+.jui-toolbar-button.active:disabled {
+    background-color: transparent;
+}
+
+.jui-toolbar-button.active:disabled:hover {
+    background-color: transparent;
+}
+
+
+/* .jui-toolbar-menu-button { } */
+
+.jui-toolbar-menu-button:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.jui-toolbar-menu-button:disabled {
+    background-color: transparent;
+}
+
+.jui-toolbar-menu-button:disabled>.jui-toolbar-icon-svg {
+    fill: #999;
+}
+
+.jui-toolbar-menu-button:disabled:hover {
+    background-color: transparent;
+}

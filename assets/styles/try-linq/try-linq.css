@@ -1,0 +1,147 @@
+@import url('themes/default/theme.css');
+@import url('themes/dark/theme.css');
+.app-page-toolbar {
+    height: auto;
+}
+
+.app-page-footer {
+    height: auto;
+    text-align: right;
+    padding: 2px 10px;
+    font-size: 0.9em;
+}
+
+.app-panel-icon {
+    font-size: 0.8em;
+}
+
+.app-button-theme {
+    font-size: 16px;
+}
+
+.app-tool-panel-toolbar {
+    height: auto;
+}
+
+.jui-toolbar-button {
+    padding-right: 8px;
+    padding-left: 8px;
+}
+
+.jui-toolbar-items {
+    justify-content: flex-end;
+}
+
+.app-toolbar-label {
+    padding: 0 10px;
+    font-weight: 700;
+}
+
+.app-toolbar-button.app-button-theme i {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+}
+
+.app-toolbar-button.app-button-theme i.icon-dark {
+    color: #fff;
+}
+
+.app-toolbar-button.app-button-theme i.icon-light {
+    color: #222;
+    display: none;
+}
+
+.app-toolbar-button.app-button-theme.active i.icon-dark {
+    display: none;
+}
+
+.app-toolbar-button.app-button-theme.active i.icon-light {
+    display: block;
+}
+
+.app-code-panel-footer {
+    height: auto;
+    padding: 10px;
+}
+
+.app-code-panel-footer-info {
+    padding-right: 10px;
+}
+
+.app-code-panel-footer-info>span {
+    display: none;
+    text-align: left;
+    vertical-align: sub;
+}
+
+.app-code-panel-footer-butttons {
+    width: auto;
+}
+
+.app-panels-layout {
+    height: 100%;
+    position: relative;
+}
+
+.app-panels-layout.layout-1 .panel1 {
+    height: 33%;
+}
+
+.app-panels-layout.layout-1 .panel2 {
+    height: 35%;
+}
+
+.app-panels-layout.layout-1 .panel3 {
+    height: 32%;
+}
+
+.app-panels-layout.layout-2 .panel1 {
+    position: absolute;
+    height: 40%;
+    width: 100%;
+}
+
+.app-panels-layout.layout-2 .panel2 {
+    position: absolute;
+    height: 60%;
+    right: 0;
+    bottom: 0;
+    width: 50%;
+}
+
+.app-panels-layout.layout-2 .panel3 {
+    position: absolute;
+    height: 60%;
+    bottom: 0;
+    width: 50%;
+}
+
+.app-panels-layout.layout-3 .panel1 {
+    position: absolute;
+    height: 100%;
+    width: 33%;
+    left: 0;
+    top: 0;
+}
+
+.app-panels-layout.layout-3 .panel2 {
+    position: absolute;
+    height: 100%;
+    right: 0;
+    bottom: 0;
+    right: 33%;
+    left: 33%;
+    top: 0;
+}
+
+.app-panels-layout.layout-3 .panel3 {
+    position: absolute;
+    height: 100%;
+    bottom: 0;
+    width: 33%;
+    right: 0;
+    top: 0;
+}

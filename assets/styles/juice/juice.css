@@ -1,0 +1,170 @@
+@import url('https://fonts.googleapis.com/css?family=Nunito:300,400,700&display=swap');
+@import url('themes/default/theme.css');
+@import url('themes/dark/theme.css');
+html {
+    margin: 0;
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    font-family: 'Nunito', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+
+/* #################### scrollbars #################### */
+
+
+/* ::-webkit-scrollbar-track { } */
+
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+
+/* ::-webkit-scrollbar-thumb { } */
+
+
+/* ::-webkit-scrollbar-corner { } */
+
+
+/* #################### .jui-accordion #################### */
+
+.jui-accordion-header {
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    padding-top: 4px;
+    padding-left: 6px;
+    padding-right: 3ch;
+    padding-bottom: 5px;
+}
+
+
+/* .jui-accordion-symbol { } */
+
+.jui-accordion-container {
+    padding: 6px;
+    border-top: 0;
+}
+
+
+/* #################### .jui-button #################### */
+
+.jui-button {
+    padding: 4px 12px;
+    border-radius: 4px;
+}
+
+
+/* .jui-button:hover { } */
+
+
+/* #################### .jui-dialog #################### */
+
+.jui-dialog {
+    min-width: 240px;
+    min-height: 100px;
+    border-radius: 4px 4px 2px 2px;
+}
+
+.jui-dialog-header {
+    padding: 5px 20px;
+    font-weight: 600;
+    border-radius: 4px 4px 0 0;
+}
+
+.jui-dialog-content {
+    border-radius: 0 0 2px 2px;
+    padding: 10px 20px;
+}
+
+.jui-dialog-buttons {
+    text-align: center;
+    padding-top: 10px;
+    padding-bottom: 15px;
+}
+
+
+/* .jui-dialog-mask { } */
+
+.jui-dialog.modal .jui-dialog-buttons>.jui-button {
+    margin: 0 2px;
+}
+
+
+/* #################### .jui-table-view #################### */
+
+.jui-table-view th {
+    padding: 0 4px;
+    font-size: 0.9em;
+}
+
+.jui-table-view th.index {
+    text-align: left;
+}
+
+.jui-table-view td {
+    padding-left: 4px;
+    padding-right: 4px;
+}
+
+.jui-table-view td.index {
+    font-size: 0.85em;
+}
+
+
+/* #################### .jui-toolbar #################### */
+
+.jui-toolbar-label {
+    padding: 0 10px;
+}
+
+
+/* .jui-toolbar-icon-font { } */
+
+
+/* .jui-toolbar-icon-svg { } */
+
+.jui-toolbar-items {
+    justify-content: flex-start;
+}
+
+.jui-toolbar-item-separator {
+    height: 100%;
+    width: 1px;
+    margin-left: 0px;
+    margin-right: 0px;
+    min-height: 32px;
+}
+
+.jui-toolbar-button {
+    min-width: 32px;
+    min-height: 32px;
+    outline: 0;
+    border: 0;
+    border-radius: 0;
+    padding: 4px 4px;
+}
+
+
+/* .jui-toolbar-button:hover { } */
+
+
+/* .jui-toolbar-button.active { } */
+
+.jui-toolbar-button.jui-toolbar-menu-button {
+    min-width: auto;
+    padding-left: 0;
+    padding-right: 0;
+}
+
+
+/* .jui-toolbar-menu-button:hover { } */
