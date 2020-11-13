@@ -38,3 +38,4 @@ Espandere il nodo del progetto **try-linq** fare click con il tasto destro e sel
 - New Features:
     - metodo ToQuery per generare query compatibili con DynamicLinq
     - verificare la possibilità di concatenare espressioni per il metodo where e simili
+    - caricamento di snippet di codice di esempio da un elenco a menu (uno per ogni metodo)

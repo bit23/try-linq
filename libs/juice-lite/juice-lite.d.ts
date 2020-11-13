@@ -2,9 +2,10 @@ declare namespace Juice {
     interface ClassInfoBase {
         baseClass: any;
         className: string;
+        isAbstract?: boolean;
     }
     interface ComponentInfoBase extends ClassInfoBase {
-        tagName: string;
+        tagName?: string;
     }
     interface ClassInfo<T> extends ClassInfoBase {
         classConstructor: new (...args: any[]) => T;
@@ -12,14 +13,23 @@ declare namespace Juice {
     interface ComponentInfo<T> extends ComponentInfoBase {
         classConstructor: new (...args: any[]) => T;
     }
+    interface ComponentsFilterOptions {
+        baseClass?: any;
+        className?: RegExp;
+        tagName?: RegExp;
+        classConstructor?: (...args: any[]) => any;
+        extendClass?: any;
+    }
     class Builder {
         private static _classes;
         private static _components;
         private static registerClass;
         private static registerComponent;
+        private static classExtendsOrIsClass;
         static defineComponent<T>(info: ComponentInfo<T>): void;
         static defineClass<T>(info: ClassInfo<T>): void;
         static applyBehaviours(type: any, behaviourTypes: any[]): void;
+        static getComponents(filterOptions?: ComponentsFilterOptions): Iterable<ComponentInfoBase>;
     }
 }
 declare namespace Juice {
@@ -262,7 +272,7 @@ declare namespace Juice {
         Text = "text"
     }
     class FileButton extends Button {
-        protected static readonly DefaultFileButtonHtmlTemplate = "\n<template template-class=\"Juice.Button\">\n    <button template-part=\"button\" class=\"jui-button\">\n        <input template-part=\"inputFile\" type=\"file\" style=\"display: none\" />\n        <div template-part=\"content\" class=\"jui-button-content\"></div>\n    </button>\n</template>";
+        protected static readonly DefaultFileButtonHtmlTemplate = "\n<template template-class=\"Juice.FileButton\">\n    <button template-part=\"button\" class=\"jui-button\">\n        <input template-part=\"inputFile\" type=\"file\" style=\"display: none\" />\n        <div template-part=\"content\" class=\"jui-button-content\"></div>\n    </button>\n</template>";
         private static readonly DefaultFileButtonTemplate;
         private _part_inputFile;
         private _readerHandler;
@@ -274,6 +284,18 @@ declare namespace Juice {
         get accept(): string;
         set accept(v: string);
         readType: FileReadType;
+    }
+    class LinkButton extends ButtonBase {
+        protected static readonly DefaultLinkButtonStyles = "\n    .jui-link-button {\n        padding-left: 2px;\n        padding-right: 2px;\n        border-radius: 3px;\n        display: inline-block;\n        color: #006ab6;\n        user-select: none;\n    }\n\n    .jui-link-button:hover {\n        background-color: #0094ff;\n        color: #fff;\n        text-decoration: none;\n    }";
+        protected static readonly DefaultLinkButtonHtmlTemplate = "\n    <template template-class=\"Juice.LinkButton\">\n        <a template-part=\"content\" class=\"jui-link-button\"></a>\n    </template>";
+        private static readonly DefaultLinkButtonTemplate;
+        private _part_linkButton;
+        constructor(template?: TemplateSource);
+        protected initializeTemplate(templatedElement: Juice.TemplatedElement): void;
+        get href(): string;
+        set href(v: string);
+        get title(): string;
+        set title(v: string);
     }
 }
 declare namespace Juice {
@@ -514,6 +536,28 @@ declare namespace Juice {
     }
 }
 declare namespace Juice {
+    enum Orientation {
+        Horizontal = "horizontal",
+        Vertical = "vertical"
+    }
+    class StackLayout extends ItemsControl {
+        protected static readonly DefaultStackLayoutStyle = "\n        .jui-stack-layout-items {\n            display: flex;\n            flex-direction: column;\n            justify-content: flex-start;\n            align-items: flex-start;\n        }\n        \n        .jui-stack-layout-items.vertical {\n            flex-direction: column;\n        }\n        \n        .jui-stack-layout-items.horizontal {\n            flex-direction: row;\n        }";
+        protected static readonly DefaultStackLayoutHtmlTemplate = "\n<template template-class=\"Juice.StackLayout\">\n    <div class=\"jui-stack-layout\">\n        <div template-part=\"layoutItems\" class=\"jui-stack-layout-items vertical\"></div>\n    </div>\n</template>";
+        private static readonly DefaultStackLayoutTemplate;
+        private _part_layoutItems;
+        private _orientation;
+        constructor(template?: TemplateSource);
+        protected initializeTemplate(templatedElement: TemplatedElement): void;
+        protected _onItemsCollectionChanged(args: CollectionChangedEventArgs<UIElement>): void;
+        private onItemsAdded;
+        private onItemsRemoved;
+        private onCollectionCleared;
+        private onOrientationChanged;
+        get orientation(): Orientation;
+        set orientation(v: Orientation);
+    }
+}
+declare namespace Juice {
     class TableView extends UIElement {
         protected static readonly DefaultTableViewStyles = "\n    .jui-table-view {\n        width: auto;\n        white-space: nowrap;\n    }\n\n    .jui-table-view thead {\n    }\n\n    .jui-table-view th {\n        white-space: nowrap;\n        /*padding: 0 4px;\n        font-size: 0.9em;*/\n    }\n\n    .jui-table-view td {\n        white-space: nowrap;\n        /*padding-left: 4px;\n        padding-right: 4px;*/\n    }";
         protected static readonly DefaultTableViewHtmlTemplate = "\n    <template template-class=\"Juice.TableView\">\n        <table template-part=\"table\" class=\"jui-table-view\">\n        </table>\n    </template>";
@@ -544,6 +588,7 @@ declare namespace Juice {
         protected _onApplyTemplate(templatedElement: TemplatedElement): void;
         addButton(content?: Content): Button;
         addSeparator(): HtmlContainer;
+        addLabel(text: string): HtmlContainer;
     }
 }
 declare namespace Juice {

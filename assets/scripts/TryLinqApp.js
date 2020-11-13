@@ -220,6 +220,11 @@ var TryLinq;
     class AppPage extends Juice.Page {
         constructor(applicationService, template) {
             super(template || AppPage.DefaultAppPageTemplate);
+            this._performance = {
+                enumerableConstruction: null,
+                enumerableReading: null,
+                totalTime: null,
+            };
             this._applicationService = applicationService;
             this._applicationService.application.onApplicationReady.add((s, e) => this.readFromLocalStorage(), this);
             this._applicationService.application.onThemeChanged.add(this.onApplicationThemeChanged, this);
@@ -441,7 +446,20 @@ var TryLinq;
                 xhr.send();
             });
         }
+        getLastArrayItem(array) {
+            if (!array)
+                return null;
+            return array[array.length - 1];
+        }
+        showPerformances() {
+            document.querySelector("#enumerableConstruction").innerText = (Math.round(this._performance.enumerableConstruction.duration * 1000) / 1000) + " ms";
+            document.querySelector("#enumerableReading").innerText = (Math.round(this._performance.enumerableReading.duration * 1000) / 1000) + " ms";
+            document.querySelector("#totalTime").innerText = (Math.round(this._performance.totalTime.duration * 1000) / 1000) + " ms";
+        }
         onButtonRunClick(s, e) {
+            var p = window.performance;
+            p.clearMarks();
+            p.clearMeasures();
             var code = this._codePanel.code;
             if (code.charAt(code.length - 1) === ";")
                 code = code.substr(0, code.length - 1);
@@ -449,12 +467,23 @@ var TryLinq;
             var dataEnumerable = Linq.Enumerable.from(this._dataPanel.customData);
             let result;
             try {
+                p.mark("start");
                 result = func(dataEnumerable);
+                p.mark("func-executed");
             }
             catch (err) {
+                p.mark("func-executed");
                 Juice.MessageDialog.showMessage("Execution error", err);
             }
             this.loadResult(result);
+            p.mark("result-loaded");
+            p.measure("enumerable construction", "start", "func-executed");
+            p.measure("enumerable reading", "func-executed", "result-loaded");
+            p.measure("total time", "start", "result-loaded");
+            this._performance.enumerableConstruction = this.getLastArrayItem(p.getEntriesByName("enumerable construction"));
+            this._performance.enumerableReading = this.getLastArrayItem(p.getEntriesByName("enumerable reading"));
+            this._performance.totalTime = this.getLastArrayItem(p.getEntriesByName("total time"));
+            this.showPerformances();
             this.saveToLocalStorage();
         }
         onButtonLayoutClick(s, e) {
@@ -503,13 +532,13 @@ var TryLinq;
     </template>`;
     AppPage.DefaultAppPageTemplate = `<style>\n${AppPage.DefaultAppPageStyles}\n</style>\n${AppPage.DefaultAppPageHtmlTemplate}`;
     AppPage.DefaultEditorCode = `data
-    .where(record => record.state === "LA" && /@gmail?/.test(record.email))
-    .select(record => {
+    .where(x => x.state === "LA" && /@gmail?/.test(x.email))
+    .select(x => {
         return {
-            first_name: record.first_name,
-            last_name: record.last_name,
-            email: record.email,
-            state: record.state
+            first_name: x.first_name,
+            last_name: x.last_name,
+            email: x.email,
+            state: x.state
         };
     })`;
     AppPage.StoragePrefix = "try-linq:";

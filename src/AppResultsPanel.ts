@@ -10,6 +10,7 @@ namespace TryLinq {
         private _btnClearResult: Juice.Button;
         private _btnUseResultAsData: Juice.Button;
         private _btnExportResult: Juice.Button;
+        private _lblElapsedTime: Juice.HtmlContainer;
 
         constructor(template?: Juice.TemplateSource) {
             super(template);
