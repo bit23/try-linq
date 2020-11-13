@@ -76,6 +76,7 @@ declare namespace TryLinq {
         private _btnLayout2;
         private _btnLayout3;
         private _btnTheme;
+        private _performance;
         constructor(applicationService: Juice.ApplicationService, template?: Juice.TemplateSource);
         protected initializeTemplate(templatedElement: Juice.TemplatedElement): void;
         private initializeAppToolbar;
@@ -94,6 +95,8 @@ declare namespace TryLinq {
         private loadDefaultDataHandler;
         private loadResult;
         private downloadJsonData;
+        private getLastArrayItem;
+        private showPerformances;
         private onButtonRunClick;
         private onButtonLayoutClick;
         private onButtonThemeClick;
@@ -138,6 +141,7 @@ declare namespace TryLinq {
         private _btnClearResult;
         private _btnUseResultAsData;
         private _btnExportResult;
+        private _lblElapsedTime;
         constructor(template?: Juice.TemplateSource);
         protected initializeTemplate(templatedElement: Juice.TemplatedElement): void;
         onDataCleared: Juice.EventSet<AppResultsPanel, Juice.EventArgs>;

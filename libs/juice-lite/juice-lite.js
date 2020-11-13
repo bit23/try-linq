@@ -2,30 +2,37 @@ var Juice;
 (function (Juice) {
     class Builder {
         static registerClass(info) {
-            if (info.className in this._classes) {
+            if (this._classes.has(info.className)) {
                 console.log(info.className + " already defined");
                 return;
             }
-            this._classes[info.className] = info;
+            this._classes.set(info.className, info);
         }
         static registerComponent(info) {
-            var lowerTagName = info.tagName.toLowerCase();
-            if (lowerTagName in this._components) {
-                console.log(info.tagName + " already defined");
+            if (this._components.has(info.className)) {
+                console.log(info.className + " already defined");
                 return;
             }
-            this._components[lowerTagName] = info;
+            this._components.set(info.className, info);
+        }
+        static classExtendsOrIsClass(componentInfo, testClass) {
+            if (componentInfo.classConstructor === testClass) {
+                return true;
+            }
+            return componentInfo.classConstructor.prototype instanceof testClass;
         }
         static defineComponent(info) {
+            this.registerComponent(info);
             Object.defineProperty(info.classConstructor, "baseClass", { value: info.baseClass });
             Object.defineProperty(info.classConstructor, "className", { value: info.className });
-            Object.defineProperty(info.classConstructor, "tagName", { value: info.tagName });
-            this.registerComponent(info);
+            if (info.tagName) {
+                Object.defineProperty(info.classConstructor, "tagName", { value: info.tagName });
+            }
         }
         static defineClass(info) {
+            this.registerClass(info);
             Object.defineProperty(info.classConstructor, "className", { value: info.className });
             Object.defineProperty(info.classConstructor, "baseClass", { value: info.baseClass });
-            this.registerClass(info);
         }
         static applyBehaviours(type, behaviourTypes) {
             behaviourTypes.forEach(baseCtor => {
@@ -34,9 +41,43 @@ var Juice;
                 });
             });
         }
+        static getComponents(filterOptions) {
+            if (!filterOptions) {
+                return this._components.values();
+            }
+            else {
+                let filterHandler = (v) => {
+                    if (filterOptions.extendClass && !this.classExtendsOrIsClass(v, filterOptions.extendClass)) {
+                        return false;
+                    }
+                    if (filterOptions.baseClass && filterOptions.baseClass !== v.baseClass) {
+                        return false;
+                    }
+                    if (filterOptions.className && !filterOptions.className.test(v.className)) {
+                        return false;
+                    }
+                    if (filterOptions.tagName && !filterOptions.tagName.test(v.tagName)) {
+                        return false;
+                    }
+                    if (filterOptions.classConstructor) {
+                        if ("classConstructor" in v) {
+                            let component = v;
+                            if (filterOptions.classConstructor !== component.classConstructor) {
+                                return false;
+                            }
+                        }
+                        else {
+                            return false;
+                        }
+                    }
+                    return true;
+                };
+                return Array.from(this._components.values()).filter(filterHandler);
+            }
+        }
     }
-    Builder._classes = {};
-    Builder._components = {};
+    Builder._classes = new Map();
+    Builder._components = new Map();
     Juice.Builder = Builder;
 })(Juice || (Juice = {}));
 var Juice;
@@ -48,6 +89,11 @@ var Juice;
         }
     }
     Juice.BindableObject = BindableObject;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: BindableObject,
+        className: "Juice.BindableObject"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -150,7 +196,7 @@ var Juice;
         }
     }
     Juice.UIElement = UIElement;
-    Juice.Builder.defineClass({
+    Juice.Builder.defineComponent({
         baseClass: Juice.BindableObject,
         className: "Juice.UIElement",
         classConstructor: UIElement
@@ -272,6 +318,12 @@ var Juice;
         }
     }
     Juice.Control = Control;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.UIElement,
+        classConstructor: Control,
+        className: "Juice.Control",
+        tagName: "jui-control"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -555,6 +607,11 @@ var Juice;
         }
     }
     Juice.Template = Template;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: Template,
+        className: "Juice.Template"
+    });
     class TemplatedElement {
         constructor(template, templateNode) {
             this._template = template;
@@ -607,6 +664,11 @@ var Juice;
         }
     }
     Juice.TemplatedElement = TemplatedElement;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: TemplatedElement,
+        className: "Juice.TemplatedElement"
+    });
     class TemplatePart {
         constructor(name, element) {
             this.name = name;
@@ -614,6 +676,11 @@ var Juice;
         }
     }
     Juice.TemplatePart = TemplatePart;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: TemplatePart,
+        className: "Juice.TemplatePart"
+    });
     class TemplateManager {
         static createTemplate(templateSource) {
             if (templateSource instanceof Template) {
@@ -683,6 +750,11 @@ var Juice;
     TemplateManager._templateDefinitions = [];
     TemplateManager._importedClassesStyles = new Set();
     Juice.TemplateManager = TemplateManager;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: TemplateManager,
+        className: "Juice.TemplateManager"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -832,6 +904,11 @@ var Juice;
         get currentTheme() { return this._currentTheme; }
     }
     Juice.Application = Application;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: Application,
+        className: "Juice.Application"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -888,6 +965,12 @@ var Juice;
         }
     }
     Juice.ButtonBase = ButtonBase;
+    Juice.Builder.defineComponent({
+        baseClass: Object,
+        classConstructor: Juice.BindableObject,
+        className: "Juice.BindableObject",
+        isAbstract: true
+    });
     class Button extends ButtonBase {
         constructor(template) {
             super(template || Button.DefaultButtonTemplate);
@@ -991,7 +1074,7 @@ var Juice;
         }
     }
     FileButton.DefaultFileButtonHtmlTemplate = `
-<template template-class="Juice.Button">
+<template template-class="Juice.FileButton">
     <button template-part="button" class="jui-button">
         <input template-part="inputFile" type="file" style="display: none" />
         <div template-part="content" class="jui-button-content"></div>
@@ -1000,10 +1083,60 @@ var Juice;
     FileButton.DefaultFileButtonTemplate = `<style>\n${Button.DefaultButtonStyles}\n</style>\n${FileButton.DefaultFileButtonHtmlTemplate}`;
     Juice.FileButton = FileButton;
     Juice.Builder.defineComponent({
+        baseClass: Button,
+        classConstructor: FileButton,
+        className: "Juice.FileButton",
+        tagName: "jui-file-button"
+    });
+    class LinkButton extends ButtonBase {
+        constructor(template) {
+            super(template || LinkButton.DefaultLinkButtonTemplate);
+            this.onClick = new Juice.EventSet(this.events, "onClick", this);
+        }
+        initializeTemplate(templatedElement) {
+            super.initializeTemplate(templatedElement);
+            this._part_linkButton = templatedElement.getPart("content").element;
+            this._part_linkButton.href = "#";
+        }
+        get href() {
+            return this._part_linkButton.href;
+        }
+        set href(v) {
+            this._part_linkButton.href = v;
+        }
+        get title() {
+            return this._part_linkButton.title;
+        }
+        set title(v) {
+            this._part_linkButton.title = v;
+        }
+    }
+    LinkButton.DefaultLinkButtonStyles = `
+    .jui-link-button {
+        padding-left: 2px;
+        padding-right: 2px;
+        border-radius: 3px;
+        display: inline-block;
+        color: #006ab6;
+        user-select: none;
+    }
+
+    .jui-link-button:hover {
+        background-color: #0094ff;
+        color: #fff;
+        text-decoration: none;
+    }`;
+    LinkButton.DefaultLinkButtonHtmlTemplate = `
+    <template template-class="Juice.LinkButton">
+        <a template-part="content" class="jui-link-button"></a>
+    </template>`;
+    LinkButton.DefaultLinkButtonTemplate = `<style>\n${LinkButton.DefaultLinkButtonStyles}\n</style>\n${LinkButton.DefaultLinkButtonHtmlTemplate}`;
+    Juice.LinkButton = LinkButton;
+    Juice.Builder.defineComponent({
         baseClass: ButtonBase,
-        classConstructor: Button,
-        className: "Juice.Button",
-        tagName: "jui-button"
+        classConstructor: LinkButton,
+        className: "Juice.LinkButton",
+        tagName: "jui-link-button"
     });
 })(Juice || (Juice = {}));
 var Juice;
@@ -1213,6 +1346,11 @@ var Juice;
         }
     }
     Juice.Collection = Collection;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: Collection,
+        className: "Juice.Collection"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -1305,6 +1443,11 @@ var Juice;
     </template>`;
     Dialog.DefaultDialogTemplate = `<style>\n${Dialog.DefaultDialogStyles}\n</style>\n${Dialog.DefaultDialogHtmlTemplate}`;
     Juice.Dialog = Dialog;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.UIElement,
+        classConstructor: Dialog,
+        className: "Juice.Dialog"
+    });
     class ModalDialog extends Dialog {
         constructor(title, template) {
             super(title, template || ModalDialog.DefaultModalDialogTemplate);
@@ -1347,6 +1490,11 @@ var Juice;
     </template>`;
     ModalDialog.DefaultModalDialogTemplate = `<style>\n${ModalDialog.DefaultModalDialogStyles}\n</style>\n${ModalDialog.DefaultModalDialogHtmlTemplate}`;
     Juice.ModalDialog = ModalDialog;
+    Juice.Builder.defineComponent({
+        baseClass: Dialog,
+        classConstructor: ModalDialog,
+        className: "Juice.ModalDialog"
+    });
     class MessageDialog extends ModalDialog {
         static showMessage(title, message, parent) {
             let dialog = new MessageDialog(title, message);
@@ -1368,6 +1516,11 @@ var Juice;
         }
     }
     Juice.MessageDialog = MessageDialog;
+    Juice.Builder.defineComponent({
+        baseClass: ModalDialog,
+        classConstructor: MessageDialog,
+        className: "Juice.MessageDialog"
+    });
     let QuestionDialogButtons;
     (function (QuestionDialogButtons) {
         QuestionDialogButtons[QuestionDialogButtons["OkCancel"] = 0] = "OkCancel";
@@ -1400,6 +1553,11 @@ var Juice;
         }
     }
     Juice.QuestionDialog = QuestionDialog;
+    Juice.Builder.defineComponent({
+        baseClass: ModalDialog,
+        classConstructor: QuestionDialog,
+        className: "Juice.QuestionDialog"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -1433,6 +1591,11 @@ var Juice;
         }
     }
     Juice.EventSet = EventSet;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: EventSet,
+        className: "Juice.EventSet"
+    });
     class EventsManager {
         constructor(owner) {
             this._validEventOptions = ["once"];
@@ -1571,6 +1734,11 @@ var Juice;
         }
     }
     Juice.EventsManager = EventsManager;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: EventsManager,
+        className: "Juice.EventsManager"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -1785,6 +1953,12 @@ var Juice;
         </div>
     </template>`;
     Juice.Grid = Grid;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.ItemsControl,
+        classConstructor: Grid,
+        className: "Juice.Grid",
+        tagName: "jui-grid"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -1839,6 +2013,12 @@ var Juice;
         }
     }
     Juice.HtmlContainer = HtmlContainer;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.UIElement,
+        classConstructor: HtmlContainer,
+        className: "Juice.HtmlContainer",
+        tagName: "jui-html-container"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -1873,6 +2053,12 @@ var Juice;
         }
     }
     Juice.Page = Page;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.UIElement,
+        classConstructor: Page,
+        className: "Juice.Page",
+        tagName: "jui-page"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -1903,6 +2089,114 @@ var Juice;
         }
     }
     Juice.Selector = Selector;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: Selector,
+        className: "Juice.Selector"
+    });
+})(Juice || (Juice = {}));
+var Juice;
+(function (Juice) {
+    let Orientation;
+    (function (Orientation) {
+        Orientation["Horizontal"] = "horizontal";
+        Orientation["Vertical"] = "vertical";
+    })(Orientation = Juice.Orientation || (Juice.Orientation = {}));
+    class StackLayout extends Juice.ItemsControl {
+        constructor(template) {
+            super(template || StackLayout.DefaultStackLayoutTemplate);
+            this._orientation = Orientation.Vertical;
+        }
+        initializeTemplate(templatedElement) {
+            super.initializeTemplate(templatedElement);
+            this._part_layoutItems = templatedElement.getPart("layoutItems").element;
+        }
+        _onItemsCollectionChanged(args) {
+            switch (args.action) {
+                case Juice.CollectionChangedAction.Added: {
+                    this.onItemsAdded(args);
+                    break;
+                }
+                case Juice.CollectionChangedAction.Removed: {
+                    this.onItemsRemoved(args);
+                    break;
+                }
+                case Juice.CollectionChangedAction.Cleared: {
+                    this.onCollectionCleared(args);
+                    break;
+                }
+            }
+        }
+        onItemsAdded(e) {
+            var refElement = this._part_layoutItems.children[e.index];
+            if (!refElement) {
+                for (let i = 0; i < e.items.length; i++) {
+                    let item = e.items[i];
+                    this._part_layoutItems.appendChild(e.items[i].htmlElement);
+                }
+            }
+            else {
+                for (let i = 0; i < e.items.length; i++) {
+                    var child = e.items[i].htmlElement;
+                    this._part_layoutItems.insertBefore(child, refElement);
+                    refElement = child;
+                }
+            }
+        }
+        onItemsRemoved(e) {
+            console.warn("StackPanel.onItemsRemoved not implemented");
+        }
+        onCollectionCleared(e) {
+            while (this._part_layoutItems.firstChild)
+                this._part_layoutItems.firstChild.remove();
+        }
+        onOrientationChanged() {
+            if (this._orientation === Orientation.Vertical) {
+                this._part_layoutItems.classList.add("vertical");
+                this._part_layoutItems.classList.remove("horizontal");
+            }
+            else {
+                this._part_layoutItems.classList.add("horizontal");
+                this._part_layoutItems.classList.remove("vertical");
+            }
+        }
+        get orientation() { return this._orientation; }
+        set orientation(v) {
+            if (this._orientation !== v) {
+                this._orientation = v;
+                this.onOrientationChanged();
+            }
+        }
+    }
+    StackLayout.DefaultStackLayoutStyle = `
+        .jui-stack-layout-items {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: flex-start;
+        }
+        
+        .jui-stack-layout-items.vertical {
+            flex-direction: column;
+        }
+        
+        .jui-stack-layout-items.horizontal {
+            flex-direction: row;
+        }`;
+    StackLayout.DefaultStackLayoutHtmlTemplate = `
+<template template-class="Juice.StackLayout">
+    <div class="jui-stack-layout">
+        <div template-part="layoutItems" class="jui-stack-layout-items vertical"></div>
+    </div>
+</template>`;
+    StackLayout.DefaultStackLayoutTemplate = `<style>\n${StackLayout.DefaultStackLayoutStyle}\n</style>\n${StackLayout.DefaultStackLayoutHtmlTemplate}`;
+    Juice.StackLayout = StackLayout;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.ItemsControl,
+        classConstructor: StackLayout,
+        className: "Juice.StackLayout",
+        tagName: "jui-stack-layout"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -2075,6 +2369,12 @@ var Juice;
     </template>`;
     TableView.DefaultTableViewTemplate = `<style>\n${TableView.DefaultTableViewStyles}\n</style>\n${TableView.DefaultTableViewHtmlTemplate}`;
     Juice.TableView = TableView;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.UIElement,
+        classConstructor: TableView,
+        className: "Juice.TableView",
+        tagName: "jui-table-view"
+    });
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -2143,6 +2443,12 @@ var Juice;
             sep.htmlElement.classList.add("jui-toolbar-item-separator");
             this.items.add(sep);
             return sep;
+        }
+        addLabel(text) {
+            let label = new Juice.HtmlContainer();
+            label.htmlElement.textContent = text;
+            this.items.add(label);
+            return label;
         }
     }
     Toolbar.DefaultToolbarStyles = `

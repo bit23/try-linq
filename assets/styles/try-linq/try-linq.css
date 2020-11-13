@@ -72,7 +72,7 @@
 }
 
 .app-code-panel-footer-info>span {
-    display: none;
+    /*display: none;*/
     text-align: left;
     vertical-align: sub;
 }

@@ -30,13 +30,13 @@ namespace TryLinq {
         private static readonly DefaultAppPageTemplate = `<style>\n${AppPage.DefaultAppPageStyles}\n</style>\n${AppPage.DefaultAppPageHtmlTemplate}`;
 
         private static readonly DefaultEditorCode = `data
-    .where(record => record.state === "LA" && /@gmail?/.test(record.email))
-    .select(record => {
+    .where(x => x.state === "LA" && /@gmail?/.test(x.email))
+    .select(x => {
         return {
-            first_name: record.first_name,
-            last_name: record.last_name,
-            email: record.email,
-            state: record.state
+            first_name: x.first_name,
+            last_name: x.last_name,
+            email: x.email,
+            state: x.state
         };
     })`;
 
@@ -59,6 +59,12 @@ namespace TryLinq {
         private _btnLayout2: Juice.Button;
         private _btnLayout3: Juice.Button;
         private _btnTheme: Juice.Button;
+
+        private _performance = {
+            enumerableConstruction: <PerformanceEntry>null,
+            enumerableReading: <PerformanceEntry>null,
+            totalTime: <PerformanceEntry>null,
+        };
 
         constructor(
             applicationService: Juice.ApplicationService,
@@ -334,11 +340,22 @@ namespace TryLinq {
             );
         }
 
+        private getLastArrayItem<T>(array: Array<T>) {
+            if(!array) return null;
+            return array[array.length -1];
+        }
+
+        private showPerformances() {
+            (<HTMLElement>document.querySelector("#enumerableConstruction")).innerText = (Math.round(this._performance.enumerableConstruction.duration * 1000) / 1000) + " ms";
+            (<HTMLElement>document.querySelector("#enumerableReading")).innerText = (Math.round(this._performance.enumerableReading.duration * 1000) / 1000) + " ms";
+            (<HTMLElement>document.querySelector("#totalTime")).innerText = (Math.round(this._performance.totalTime.duration * 1000) / 1000) + " ms";
+        }
+
         private onButtonRunClick(s: AppCodePanel, e: Juice.EventArgs) {
 
-            // var p = window.performance;
-            // p.clearMarks();
-            // p.clearMeasures();
+            var p = window.performance;
+            p.clearMarks();
+            p.clearMeasures();
 
             var code = this._codePanel.code;
             if (code.charAt(code.length - 1) === ";")
@@ -350,26 +367,27 @@ namespace TryLinq {
             let result: any;
 
             try {
-                //p.mark("start");
+                p.mark("start");
                 result = func(dataEnumerable);
-                //p.mark("func-executed");
+                p.mark("func-executed");
             }
             catch (err) {
-                //p.mark("func-executed");
+                p.mark("func-executed");
                 Juice.MessageDialog.showMessage("Execution error", err);
             }
 
             this.loadResult(result);
+            p.mark("result-loaded");
 
-            // p.measure("enumerable construction", "start", "func-executed");
-            // p.measure("enumerable reading", "func-executed", "result-loaded");
-            // p.measure("total time", "start", "result-loaded");
+            p.measure("enumerable construction", "start", "func-executed");
+            p.measure("enumerable reading", "func-executed", "result-loaded");
+            p.measure("total time", "start", "result-loaded");
 
-            // this._performance.enumerableConstruction = this.getLastItem(p.getEntriesByName("enumerable construction"));
-            // this._performance.enumerableReading = this.getLastItem(p.getEntriesByName("enumerable reading"));
-            // this._performance.totalTime = this.getLastItem(p.getEntriesByName("total time"));
+            this._performance.enumerableConstruction = this.getLastArrayItem(p.getEntriesByName("enumerable construction"));
+            this._performance.enumerableReading = this.getLastArrayItem(p.getEntriesByName("enumerable reading"));
+            this._performance.totalTime = this.getLastArrayItem(p.getEntriesByName("total time"));
 
-            // this.showPerformances();
+            this.showPerformances();
 
             this.saveToLocalStorage();
         }
