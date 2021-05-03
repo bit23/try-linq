@@ -22,7 +22,9 @@ namespace TryLinq {
             <div template-part="appToolbar" class="app-page-toolbar"></div>
             <div template-part="appContent" class="app-page-content"></div>
             <div class="app-page-footer">
-                <span>linq-g ver. <span template-part="appVersion"></span></span>
+				<span>try-linq v. <span template-part="appVersion"></span></span>
+				<span>&nbsp;&nbsp;-&nbsp;&nbsp;</span>
+                <span>linq-g v. <span template-part="engineVersion"></span></span>
             </div>
         </div>
     </template>`;
@@ -48,6 +50,7 @@ namespace TryLinq {
         private _part_appToolbar: HTMLElement;
         private _part_appContent: HTMLElement;
         private _part_appVersion: HTMLElement;
+		private _part_engineVersion: HTMLElement;
 
         private _appToolbar: AppToolbar;
         private _appPanelsLayout: AppPanelsLayout;
@@ -112,6 +115,9 @@ namespace TryLinq {
             this._part_appToolbar = templatedElement.getPart<HTMLElement>("appToolbar").element;
             this._part_appContent = templatedElement.getPart<HTMLElement>("appContent").element;
             this._part_appVersion = templatedElement.withPartElement<HTMLElement>("appVersion", (element) => {
+                element.innerText = TryLinq.Version;
+            });
+			this._part_engineVersion = templatedElement.withPartElement<HTMLElement>("engineVersion", (element) => {
                 element.innerText = Linq.Version;
             });
         }
@@ -319,11 +325,30 @@ namespace TryLinq {
         }
 
         private loadResult(result: any) {
-            if (result instanceof Linq.Enumerable) {
-                result = result.toArray();
-            }
+
+			if (Linq.isGroupedEnumerable(result)) {
+				// const tmp: any[] = [];
+				// for (const grouping of result) {
+				// 	const item = {
+				// 		key: grouping.key,
+				// 		children: grouping.count()
+				// 	};
+				// 	tmp.push(item);
+				// }
+				// result = tmp;
+
+				const tmp: {[name: string]: any} = {};
+				for (const grouping of result) {
+					Reflect.set(tmp, grouping.key, [...grouping]);
+				}
+				result = tmp;
+			}
+			else if (Linq.isEnumerable(result)) {
+				result = (result as any).toArray();
+			}
+
             this._resultsPanel.resultData = result;
-        }
+		}
 
         private downloadJsonData(url: string) {
             return new Promise<any>(

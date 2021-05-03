@@ -118,24 +118,26 @@ var Juice;
                     .then(result => {
                     this.template = result;
                 })
-                    .catch(err => { });
+                    .catch(err => { throw new Error(err); });
             }
         }
         initializeTemplate(templatedElement) {
             let templateHtmlElement = templatedElement.rootElement;
-            templateHtmlElement.setAttribute("uid", this.uid.toString());
-            if (this._htmlElement) {
+            if (templateHtmlElement != this.htmlElement) {
+                templateHtmlElement.setAttribute("uid", this.uid.toString());
+                if (this._htmlElement) {
+                    if (this._htmlElement.parentElement && templateHtmlElement != this._htmlElement) {
+                        this._htmlElement.parentElement.insertBefore(templateHtmlElement, this._htmlElement);
+                        this._htmlElement.parentElement.removeChild(this._htmlElement);
+                    }
+                }
                 if (this._htmlElement.parentElement) {
                     this._htmlElement.parentElement.insertBefore(templateHtmlElement, this._htmlElement);
-                    this._htmlElement.parentElement.removeChild(this._htmlElement);
+                    this._htmlElement.remove();
                 }
+                this._htmlElement = templateHtmlElement;
+                Juice.Internals.registerElement(this.uid, this, this._htmlElement);
             }
-            if (this._htmlElement.parentElement) {
-                this._htmlElement.parentElement.insertBefore(templateHtmlElement, this._htmlElement);
-                this._htmlElement.remove();
-            }
-            this._htmlElement = templateHtmlElement;
-            Juice.Internals.registerElement(this.uid, this, this._htmlElement);
         }
         _onApplyTemplate(templatedElement) { }
         registerApplyTemplateListener(handler) {
@@ -377,7 +379,7 @@ var Juice;
     Juice.ContentControlBehaviour = ContentControlBehaviour;
     class ContentControl extends Juice.Control {
         constructor(template) {
-            super(template || ContentControl.DefaultContentControlTemplate);
+            super(template);
         }
         initializeTemplate(templatedElement) {
             super.initializeTemplate(templatedElement);
@@ -556,6 +558,189 @@ var Juice;
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
+    ;
+    class EventSet {
+        constructor(eventGroup, eventName, bindTarget) {
+            this._bindTarget = bindTarget;
+            this._eventsManager = eventGroup;
+            this._eventName = eventName;
+        }
+        add(handler, bindTarget) {
+            this._eventsManager.attach(this._eventName, handler, { once: false }, bindTarget || this._bindTarget);
+        }
+        once(handler) {
+            this._eventsManager.attach(this._eventName, handler, { once: true }, this._bindTarget);
+        }
+        remove(handler) {
+            this._eventsManager.detach(this._eventName, handler);
+        }
+        has(handler) {
+            return this._eventsManager.hasHandler(this._eventName, handler);
+        }
+        trigger(args) {
+            this._eventsManager.trigger(this._eventName, args);
+        }
+        stop() {
+            this._eventsManager.stop(this._eventName);
+        }
+        resume() {
+            this._eventsManager.resume(this._eventName);
+        }
+    }
+    Juice.EventSet = EventSet;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: EventSet,
+        className: "Juice.EventSet"
+    });
+    class EventsManager {
+        constructor(owner) {
+            this._validEventOptions = ["once"];
+            this._disabledEventsNames = [];
+            this._owner = owner;
+            this._events = new Map();
+        }
+        getHandlerEntryIndex(evntGroup, eventHandler) {
+            var positions = evntGroup.entries.map((v, i) => v.handler === eventHandler ? i : -1).filter(v => v >= 0);
+            if (positions.length == 0) {
+                return -1;
+            }
+            return positions[0];
+        }
+        attach(eventName, eventHandler, eventOptions, bindTarget) {
+            if (typeof eventHandler !== "function") {
+                return;
+            }
+            let lowerEventName = eventName.toLowerCase();
+            let eventEntry = {
+                handler: eventHandler,
+                options: eventOptions,
+                bindTarget: bindTarget
+            };
+            if (this._events.has(lowerEventName)) {
+                let eventGroupEntry = this._events.get(lowerEventName);
+                eventGroupEntry.entries.push(eventEntry);
+            }
+            else {
+                let eventGroupEntry = {
+                    eventName: eventName,
+                    entries: [eventEntry]
+                };
+                this._events.set(lowerEventName, eventGroupEntry);
+            }
+        }
+        detach(eventName, eventHandler) {
+            if (typeof eventHandler !== "function") {
+                return;
+            }
+            let lowerEventName = eventName.toLowerCase();
+            if (!this._events.has(lowerEventName)) {
+                return;
+            }
+            let eventGroupEntry = this._events.get(lowerEventName);
+            let entryIndex = this.getHandlerEntryIndex(eventGroupEntry, eventHandler);
+            if (entryIndex >= 0) {
+                eventGroupEntry.entries.splice(entryIndex, 1);
+            }
+        }
+        trigger(eventName, args) {
+            var lowerEventName = eventName.toLowerCase();
+            if (!this._events.has(lowerEventName)) {
+                return;
+            }
+            let eventGroupEntry = this._events.get(lowerEventName);
+            var disabledEventIndex = this._disabledEventsNames.indexOf(lowerEventName);
+            if (disabledEventIndex !== -1 || this._disabledEventsNames.indexOf("*") !== -1)
+                return;
+            let handlersToDetach = [];
+            for (let eventEntry of eventGroupEntry.entries) {
+                let handler = eventEntry.handler;
+                if (eventEntry.bindTarget) {
+                    handler = eventEntry.handler.bind(eventEntry.bindTarget);
+                }
+                let removeAfter = false;
+                if (eventEntry.options && "once" in eventEntry.options) {
+                    removeAfter = !!eventEntry.options.once;
+                }
+                handler(this._owner, args);
+                if (removeAfter) {
+                    handlersToDetach.push(handler);
+                }
+            }
+            for (let detachableHandler of handlersToDetach) {
+                this.detach(eventName, detachableHandler);
+            }
+        }
+        getHandlersCount(eventName) {
+            let lowerEventName = eventName.toLowerCase();
+            if (!this._events.has(lowerEventName)) {
+                return 0;
+            }
+            return this._events.get(lowerEventName).entries.length;
+        }
+        hasHandler(eventName, eventHandler) {
+            if (typeof eventHandler !== "function") {
+                return false;
+            }
+            let lowerEventName = eventName.toLowerCase();
+            if (!this._events.has(lowerEventName)) {
+                return false;
+            }
+            let eventGroupEntry = this._events.get(lowerEventName);
+            return this.getHandlerEntryIndex(eventGroupEntry, eventHandler) >= 0;
+        }
+        stop(eventName) {
+            if (typeof eventName === "undefined") {
+                this._disabledEventsNames = ["*"];
+            }
+            else if (typeof eventName === "string") {
+                var eventIndex = this._disabledEventsNames.indexOf(eventName.toLowerCase());
+                if (eventIndex != -1)
+                    return;
+                this._disabledEventsNames.push(eventName.toLowerCase());
+            }
+        }
+        resume(eventName) {
+            if (typeof eventName === "undefined") {
+                this._disabledEventsNames = [];
+            }
+            else if (typeof eventName === "string") {
+                var eventIndex = this._disabledEventsNames.indexOf(eventName.toLowerCase());
+                if (eventIndex == -1)
+                    return;
+                this._disabledEventsNames.splice(eventIndex, 1);
+            }
+        }
+        create(eventName) {
+            var eventGroupObj = new EventSet(this, eventName);
+            var descriptor = {
+                enumerable: true,
+                value: eventGroupObj
+            };
+            if (!(eventName in this._owner)) {
+                Object.defineProperty(this._owner, eventName, descriptor);
+            }
+            return eventGroupObj;
+        }
+        createEventArgs(data) {
+            var result = {};
+            if (typeof data === "object") {
+                for (let k in Object.keys(data)) {
+                    result[k] = data[k];
+                }
+            }
+            return result;
+        }
+    }
+    Juice.EventsManager = EventsManager;
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: EventsManager,
+        className: "Juice.EventsManager"
+    });
+})(Juice || (Juice = {}));
+var Juice;
+(function (Juice) {
     class Template {
         constructor(className, element, styles, script) {
             this.templateClass = className;
@@ -573,6 +758,18 @@ var Juice;
             }
             return new Template(className, templateNode, styleNode, scriptNode);
         }
+        static loadManyTemplatesFromDocument(templateDocument) {
+            let result = Array();
+            let templateNodes = templateDocument.querySelectorAll("template");
+            for (const tplNode of templateNodes) {
+                let className = "";
+                if (tplNode.hasAttribute("template-class")) {
+                    className = tplNode.getAttribute("template-class");
+                }
+                result.push(new Template(className, tplNode, null, null));
+            }
+            return result;
+        }
         static from(html) {
             let doc;
             if (typeof html === "string") {
@@ -583,6 +780,17 @@ var Juice;
                 doc = html;
             }
             return Template.loadTemplateDocument(doc);
+        }
+        static manyFrom(html) {
+            let doc;
+            if (typeof html === "string") {
+                var parser = new DOMParser();
+                doc = parser.parseFromString(html, 'text/html');
+            }
+            else {
+                doc = html;
+            }
+            return Template.loadManyTemplatesFromDocument(doc);
         }
         importTemplate() {
             if (this._element.content.children.length > 1) {
@@ -616,6 +824,7 @@ var Juice;
         constructor(template, templateNode) {
             this._template = template;
             this._templateNode = templateNode;
+            this._rootElement = this._templateNode.children.item(0);
             this._parts = new Map();
             this.findParts();
         }
@@ -627,7 +836,7 @@ var Juice;
             }
         }
         get rootElement() {
-            return this._templateNode.children.item(0);
+            return this._rootElement;
         }
         get templateDefinition() {
             return this._template;
@@ -731,7 +940,7 @@ var Juice;
             }
         }
         static loadExternal(className) {
-            let templatePath = className.split(".").join("/") + ".html";
+            let templatePath = className.split(".").join("/") + ".template.html";
             return new Promise((resolve, reject) => {
                 Juice.Internals.getTemplateFile(templatePath)
                     .then(result => {
@@ -800,6 +1009,12 @@ var Juice;
         currentTheme() {
             return this.getValue("currentTheme", null);
         }
+        templateRoot() {
+            return this.getValue("templateRoot", null);
+        }
+        templateUrls() {
+            return this.getValue("templateUrls", new Array());
+        }
         getValue(name, defaultValue = null) {
             if (typeof this._options[name] === "function") {
                 return this._options[name]();
@@ -818,6 +1033,7 @@ var Juice;
     class Application {
         constructor() {
             this._isRunning = false;
+            this.applicationService = new ApplicationService(this, this.setCurrentPage, this.setCurrentTheme);
             this.events = new Juice.EventsManager(this);
             this.onApplicationReady = new Juice.EventSet(this.events, "onApplicationReady", this);
             this.onThemeChanged = new Juice.EventSet(this.events, "onThemeChanged", this);
@@ -825,7 +1041,6 @@ var Juice;
                 mainElement: null,
                 rootNode: null
             };
-            this.applicationService = new ApplicationService(this, this.setCurrentPage, this.setCurrentTheme);
         }
         initialize() {
             var optionsReader = new ApplicationOptionsReader(this._options);
@@ -834,9 +1049,9 @@ var Juice;
             this._appFrame = new ApplicationFrame(this.applicationService);
             this._appFrame.htmlElement.setAttribute("app-id", this._appId);
             this._appFrame.content = optionsReader.mainElement();
-            this.setCurrentTheme(optionsReader.currentTheme());
             this._root.appendChild(this._appFrame.htmlElement);
-            Juice.registerApplication(this);
+            Juice.registerApplication(this, this._appFrame.htmlElement);
+            this.setCurrentTheme(optionsReader.currentTheme());
         }
         setCurrentPage(page) {
             if (this._currentPage) {
@@ -854,15 +1069,20 @@ var Juice;
                 if (this._currentTheme) {
                     this.rootElement.classList.add(this._currentTheme);
                 }
-                this.onThemeChanged.trigger();
+                this.onThemeChanged.trigger({ name: theme });
             }
         }
         readOptions(options) {
             this._options = {
                 mainElement: this.getOptionsValueOrDefault(options, "mainElement", this._defaultOptions.mainElement),
                 rootNode: this.getOptionsValueOrDefault(options, "rootNode", this._defaultOptions.rootNode),
-                currentTheme: this.getOptionsValueOrDefault(options, "currentTheme", this._defaultOptions.currentTheme)
+                currentTheme: this.getOptionsValueOrDefault(options, "currentTheme", this._defaultOptions.currentTheme),
+                templateRoot: this.getOptionsValueOrDefault(options, "templateRoot", this._defaultOptions.templateRoot),
+                templateUrls: this.getOptionsValueOrDefault(options, "templateUrls", this._defaultOptions.templateUrls)
             };
+            if (this._options.templateRoot) {
+                Juice.Internals.templateDirPath = this._options.templateRoot();
+            }
         }
         getOptionsValueOrDefault(options, name, defaultValue) {
             if (name in options) {
@@ -893,10 +1113,12 @@ var Juice;
                 let options = this._configure();
                 this.readOptions(options);
             }
-            window.addEventListener("DOMContentLoaded", () => {
+            let resolver = new ApplicationStartResolver(() => {
                 this.initialize();
                 this.onApplicationReady.trigger();
-            });
+                _applicationStaticEvents.trigger("onApplicationLoaded", { appId: this.appId });
+            }, this._options.templateUrls());
+            resolver.resolve();
         }
         get appId() { return this._appId; }
         get rootElement() { return this._appFrame.htmlElement; }
@@ -904,11 +1126,62 @@ var Juice;
         get currentTheme() { return this._currentTheme; }
     }
     Juice.Application = Application;
+    const _applicationStaticEvents = new Juice.EventsManager(Application);
+    Object.defineProperty(Application, "onApplicationLoaded", {
+        value: new Juice.EventSet(_applicationStaticEvents, "onApplicationLoaded", Application)
+    });
     Juice.Builder.defineClass({
         baseClass: Object,
         classConstructor: Application,
         className: "Juice.Application"
     });
+    class ApplicationStartResolver {
+        constructor(startCallback, templateUrls) {
+            this._startCallback = startCallback;
+            this._map = new Map();
+            this._templateUrls = templateUrls || [];
+        }
+        _onStepCompleted(stepName) {
+            this._map.set(stepName, true);
+            if (Array.from(this._map).every(x => x[1])) {
+                this._startCallback();
+            }
+        }
+        _resolveTemplatesRecursive(urls, currentIndex, callback) {
+            if (currentIndex >= urls.length) {
+                callback();
+                return;
+            }
+            let url = urls[currentIndex];
+            let isAbsolute = url.startsWith("~/") || url.startsWith("http://") || url.startsWith("https://") || url.startsWith("//");
+            if (url.startsWith("~/")) {
+                url = url.substr(2);
+            }
+            Juice.Internals.getTemplateFile(url, isAbsolute)
+                .then(res => {
+                let tpls = Juice.Template.manyFrom(res);
+                for (let t of tpls) {
+                    Juice.TemplateManager.addTemplate(t);
+                }
+            })
+                .catch(err => { })
+                .then(() => {
+                this._resolveTemplatesRecursive(urls, ++currentIndex, callback);
+            });
+        }
+        resolve() {
+            this._map.set("DOM", false);
+            if (this._templateUrls) {
+                this._map.set("templates", false);
+                this._resolveTemplatesRecursive(this._templateUrls, 0, () => {
+                    this._onStepCompleted("templates");
+                });
+            }
+            window.addEventListener("DOMContentLoaded", () => {
+                this._onStepCompleted("DOM");
+            });
+        }
+    }
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
@@ -918,14 +1191,20 @@ var Juice;
             this._isSelected = false;
             this._isToggle = false;
             this.onClick = new Juice.EventSet(this.events, "onClick", this);
+            this.onClick = new Juice.EventSet(this.events, "onDoubleClick", this);
         }
         initializeTemplate(templatedElement) {
             super.initializeTemplate(templatedElement);
             templatedElement.rootElement.addEventListener("click", this.onButtonClick.bind(this));
+            templatedElement.rootElement.addEventListener("dblclick", this.onButtonDoubleClick.bind(this));
         }
         onButtonClick(e) {
             this.isSelected = !this.isSelected;
             this.events.trigger("onClick", {});
+        }
+        onButtonDoubleClick(e) {
+            this.isSelected = !this.isSelected;
+            this.events.trigger("onDoubleClick", {});
         }
         onIsSelectedPropertyChanged() {
             if (this._isToggle) {
@@ -1034,7 +1313,7 @@ var Juice;
                 let file = this._part_inputFile.files[0];
                 let reader = new FileReader();
                 reader.addEventListener("load", () => {
-                    this._readerHandler(reader);
+                    this._readerHandler(reader, file);
                 });
                 switch (this.readType) {
                     case FileReadType.ArrayBuffer: {
@@ -1090,7 +1369,7 @@ var Juice;
     });
     class LinkButton extends ButtonBase {
         constructor(template) {
-            super(template || LinkButton.DefaultLinkButtonTemplate);
+            super(template);
             this.onClick = new Juice.EventSet(this.events, "onClick", this);
         }
         initializeTemplate(templatedElement) {
@@ -1561,187 +1840,6 @@ var Juice;
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
-    ;
-    class EventSet {
-        constructor(eventGroup, eventName, bindTarget) {
-            this._bindTarget = bindTarget;
-            this._eventsManager = eventGroup;
-            this._eventName = eventName;
-        }
-        add(handler, bindTarget) {
-            this._eventsManager.attach(this._eventName, handler, { once: false }, bindTarget || this._bindTarget);
-        }
-        once(handler) {
-            this._eventsManager.attach(this._eventName, handler, { once: true }, this._bindTarget);
-        }
-        remove(handler) {
-            this._eventsManager.detach(this._eventName, handler);
-        }
-        has(handler) {
-            return this._eventsManager.hasHandler(this._eventName, handler);
-        }
-        trigger(args) {
-            this._eventsManager.trigger(this._eventName, args);
-        }
-        stop() {
-            this._eventsManager.stop(this._eventName);
-        }
-        resume() {
-            this._eventsManager.resume(this._eventName);
-        }
-    }
-    Juice.EventSet = EventSet;
-    Juice.Builder.defineClass({
-        baseClass: Object,
-        classConstructor: EventSet,
-        className: "Juice.EventSet"
-    });
-    class EventsManager {
-        constructor(owner) {
-            this._validEventOptions = ["once"];
-            this._disabledEventsNames = [];
-            this._owner = owner;
-            this._events = new Map();
-        }
-        getHandlerEntryIndex(evntGroup, eventHandler) {
-            var positions = evntGroup.entries.map((v, i) => v.handler === eventHandler ? i : -1).filter(v => v >= 0);
-            if (positions.length == 0) {
-                return -1;
-            }
-            return positions[0];
-        }
-        attach(eventName, eventHandler, eventOptions, bindTarget) {
-            if (typeof eventHandler !== "function") {
-                return;
-            }
-            let lowerEventName = eventName.toLowerCase();
-            let eventEntry = {
-                handler: eventHandler,
-                options: eventOptions,
-                bindTarget: bindTarget
-            };
-            if (this._events.has(lowerEventName)) {
-                let eventGroupEntry = this._events.get(lowerEventName);
-                eventGroupEntry.entries.push(eventEntry);
-            }
-            else {
-                let eventGroupEntry = {
-                    eventName: eventName,
-                    entries: [eventEntry]
-                };
-                this._events.set(lowerEventName, eventGroupEntry);
-            }
-        }
-        detach(eventName, eventHandler) {
-            if (typeof eventHandler !== "function") {
-                return;
-            }
-            let lowerEventName = eventName.toLowerCase();
-            if (!this._events.has(lowerEventName)) {
-                return;
-            }
-            let eventGroupEntry = this._events.get(lowerEventName);
-            let entryIndex = this.getHandlerEntryIndex(eventGroupEntry, eventHandler);
-            if (entryIndex >= 0) {
-                eventGroupEntry.entries.splice(entryIndex, 1);
-            }
-        }
-        trigger(eventName, args) {
-            var lowerEventName = eventName.toLowerCase();
-            if (!this._events.has(lowerEventName)) {
-                return;
-            }
-            let eventGroupEntry = this._events.get(lowerEventName);
-            var disabledEventIndex = this._disabledEventsNames.indexOf(lowerEventName);
-            if (disabledEventIndex !== -1 || this._disabledEventsNames.indexOf("*") !== -1)
-                return;
-            let handlersToDetach = [];
-            for (let eventEntry of eventGroupEntry.entries) {
-                let handler = eventEntry.handler;
-                if (eventEntry.bindTarget) {
-                    handler = eventEntry.handler.bind(eventEntry.bindTarget);
-                }
-                let removeAfter = false;
-                if (eventEntry.options && "once" in eventEntry.options) {
-                    removeAfter = !!eventEntry.options.once;
-                }
-                handler(this._owner, args);
-                if (removeAfter) {
-                    handlersToDetach.push(handler);
-                }
-            }
-            for (let detachableHandler of handlersToDetach) {
-                this.detach(eventName, detachableHandler);
-            }
-        }
-        getHandlersCount(eventName) {
-            let lowerEventName = eventName.toLowerCase();
-            if (!this._events.has(lowerEventName)) {
-                return 0;
-            }
-            return this._events.get(lowerEventName).entries.length;
-        }
-        hasHandler(eventName, eventHandler) {
-            if (typeof eventHandler !== "function") {
-                return false;
-            }
-            let lowerEventName = eventName.toLowerCase();
-            if (!this._events.has(lowerEventName)) {
-                return false;
-            }
-            let eventGroupEntry = this._events.get(lowerEventName);
-            return this.getHandlerEntryIndex(eventGroupEntry, eventHandler) >= 0;
-        }
-        stop(eventName) {
-            if (typeof eventName === "undefined") {
-                this._disabledEventsNames = ["*"];
-            }
-            else if (typeof eventName === "string") {
-                var eventIndex = this._disabledEventsNames.indexOf(eventName.toLowerCase());
-                if (eventIndex != -1)
-                    return;
-                this._disabledEventsNames.push(eventName.toLowerCase());
-            }
-        }
-        resume(eventName) {
-            if (typeof eventName === "undefined") {
-                this._disabledEventsNames = [];
-            }
-            else if (typeof eventName === "string") {
-                var eventIndex = this._disabledEventsNames.indexOf(eventName.toLowerCase());
-                if (eventIndex == -1)
-                    return;
-                this._disabledEventsNames.splice(eventIndex, 1);
-            }
-        }
-        create(eventName) {
-            var eventGroupObj = new EventSet(this, eventName);
-            var descriptor = {
-                enumerable: true,
-                value: eventGroupObj
-            };
-            Object.defineProperty(this._owner, name, descriptor);
-            return eventGroupObj;
-        }
-        createEventArgs(data) {
-            var result = {};
-            if (typeof data === "object") {
-                for (let k in Object.keys(data)) {
-                    result[k] = data[k];
-                }
-            }
-            return result;
-        }
-    }
-    Juice.EventsManager = EventsManager;
-    Juice.Builder.defineClass({
-        baseClass: Object,
-        classConstructor: EventsManager,
-        className: "Juice.EventsManager"
-    });
-})(Juice || (Juice = {}));
-var Juice;
-(function (Juice) {
     class ItemsControlBehaviour extends Juice.UIElementBehaviour {
         initializeItemsControlBehaviour() {
             this._items = new Juice.Collection();
@@ -1965,11 +2063,11 @@ var Juice;
     class HeaderedItemsControl extends Juice.UIElement {
         constructor(template) {
             super(template);
+            Juice.UIElementBehaviour.initialize(Juice.HeaderedControlBehaviour, this);
+            Juice.UIElementBehaviour.initialize(Juice.ItemsControlBehaviour, this);
         }
         initializeTemplate(templatedElement) {
             super.initializeTemplate(templatedElement);
-            Juice.UIElementBehaviour.initialize(Juice.HeaderedControlBehaviour, this);
-            Juice.UIElementBehaviour.initialize(Juice.ItemsControlBehaviour, this);
             this._setHeaderElement(templatedElement.getPart("header").element);
         }
     }
@@ -2025,20 +2123,28 @@ var Juice;
     let _applications = new Map();
     function getApplication(appId) {
         if (_applications.has(appId)) {
-            return _applications.get(appId);
+            let appInfo = _applications.get(appId);
+            return appInfo.appInstance;
         }
         return null;
     }
     Juice.getApplication = getApplication;
-    function registerApplication(application) {
-        if (!_applications.has(application.appId)) {
-            _applications.set(application.appId, application);
+    function registerApplication(appInstance, appHtmlElement) {
+        if (_applications.has(appInstance.appId)) {
+            throw new Error(`application ${appInstance.appId} already registered`);
+        }
+        else {
+            _applications.set(appInstance.appId, {
+                appId: appInstance.appId,
+                appInstance,
+                appHtmlElement
+            });
         }
     }
     Juice.registerApplication = registerApplication;
-    function unregisterApplication(application) {
-        if (!_applications.has(application.appId)) {
-            _applications.delete(application.appId);
+    function unregisterApplication(appInstance) {
+        if (!_applications.has(appInstance.appId)) {
+            _applications.delete(appInstance.appId);
             return true;
         }
         return false;
@@ -2058,6 +2164,58 @@ var Juice;
         classConstructor: Page,
         className: "Juice.Page",
         tagName: "jui-page"
+    });
+})(Juice || (Juice = {}));
+var Juice;
+(function (Juice) {
+    class ReactiveObjectBase {
+        constructor() {
+            this._internalValueChangedHandler = (name, oldValue, newValue) => {
+                this._events.trigger("onPropertyChanged", { name, oldValue, newValue });
+            };
+            this._map = new Map();
+            this._events = new Juice.EventsManager(this);
+            this.onPropertyChanged = this._events.create("onPropertyChanged");
+        }
+        _internalSetValue(name, value) {
+            let originalValue = null;
+            if (this._map.has(name)) {
+                originalValue = this._map.get(name);
+                if (originalValue === value) {
+                    return;
+                }
+            }
+            this._map.set(name, value);
+            if (typeof this._internalValueChangedHandler === "function") {
+                this._internalValueChangedHandler(name, originalValue, value);
+            }
+        }
+        _internalGetValue(name) {
+            return this._map.get(name);
+        }
+        _internalHas(name) {
+            return this._map.has(name);
+        }
+    }
+    class ReactiveObject extends ReactiveObjectBase {
+        constructor() {
+            super();
+        }
+        setValue(name, value) {
+            this._internalSetValue(name, value);
+            return this;
+        }
+        getValue(name) {
+            return this._internalGetValue(name);
+        }
+        has(name) {
+            return this._internalHas(name);
+        }
+    }
+    Juice.Builder.defineClass({
+        baseClass: Object,
+        classConstructor: ReactiveObject,
+        className: "Juice.ReactiveObject"
     });
 })(Juice || (Juice = {}));
 var Juice;
@@ -2327,12 +2485,76 @@ var Juice;
                     tdName.innerHTML = `<b>${k}</b>`;
                     tr.appendChild(tdName);
                     let tdValue = document.createElement("td");
-                    tdValue.innerText = value;
+                    if (Juice.Internals.isPrimitive(value) || value instanceof Date) {
+                        tdValue.innerText = `${value}`;
+                    }
+                    else {
+                        let treeItem = this.createValueTreeNode(value);
+                        tdValue.appendChild(treeItem.htmlElement);
+                    }
                     tr.appendChild(tdValue);
                     tbody.appendChild(tr);
                 }
             }
             this._part_table.appendChild(tbody);
+        }
+        createValueTreeNode(value) {
+            if (typeof value === "function")
+                return null;
+            let node = new Juice.TreeViewItem();
+            if (typeof value !== "string" && typeof value[Symbol.iterator] === 'function') {
+                let iterable = value;
+                node.header = "(iterable)";
+                this.buildIterableTree(node, iterable);
+            }
+            else if (value instanceof Date) {
+                node.header = value.toISOString();
+            }
+            else if (typeof value === "object") {
+                node.header = "(object)";
+                this.buildObjectTree(node, value);
+            }
+            else {
+                node.header = `${value}`;
+            }
+            return node;
+        }
+        buildObjectTree(owner, obj) {
+            if (obj !== null) {
+                for (let k of Object.keys(obj)) {
+                    let child = new Juice.TreeViewItem();
+                    child.header = k;
+                    let value = obj[k];
+                    if (typeof value !== "string" && typeof value[Symbol.iterator] === 'function') {
+                        this.buildIterableTree(child, value);
+                    }
+                    else if (value instanceof Date) {
+                        child.header += `: ${value.toISOString()}`;
+                    }
+                    else if (typeof value === "object") {
+                        this.buildObjectTree(child, value);
+                    }
+                    else {
+                        child.header += `: ${value}`;
+                    }
+                    owner.items.add(child);
+                }
+            }
+        }
+        buildIterableTree(owner, iterable) {
+            if (iterable !== null) {
+                owner.onStateChanged.add((s, e) => {
+                    const valueToLoad = iterable;
+                    if (e.isFirstExpansion) {
+                        owner.items.clear();
+                        for (const value of valueToLoad) {
+                            let child = this.createValueTreeNode(value);
+                            owner.items.add(child);
+                        }
+                    }
+                }, this);
+                owner.addChildTreeViewItem("");
+            }
         }
         clearTable() {
             while (this._part_table.firstChild)
@@ -2444,12 +2666,6 @@ var Juice;
             this.items.add(sep);
             return sep;
         }
-        addLabel(text) {
-            let label = new Juice.HtmlContainer();
-            label.htmlElement.textContent = text;
-            this.items.add(label);
-            return label;
-        }
     }
     Toolbar.DefaultToolbarStyles = `
     .jui-toolbar {
@@ -2528,6 +2744,320 @@ var Juice;
 })(Juice || (Juice = {}));
 var Juice;
 (function (Juice) {
+    class TreeItem extends Juice.HeaderedItemsControl {
+        constructor(template) {
+            super(template);
+            this._isExpanded = false;
+            this._neverExpanded = true;
+            this.onStateChanged = new Juice.EventSet(this.events, "onStateChanged", this);
+        }
+        initializeTemplate(templatedElement) {
+            super.initializeTemplate(templatedElement);
+            this._part_icon = templatedElement.getPart("icon").element;
+            this._part_children = templatedElement.getPart("children").element;
+            this.onIsExpandedChanged();
+        }
+        _onApplyTemplate(templatedElement) {
+            super._onApplyTemplate(templatedElement);
+            this.initializeTemplate(templatedElement);
+            if (this.items.length > 0) {
+                this.internalAddItems(0, this.items.toArray());
+            }
+        }
+        _onItemsCollectionChanged(args) {
+            switch (args.action) {
+                case Juice.CollectionChangedAction.Added:
+                    this.onItemsAdded(args);
+                    break;
+                case Juice.CollectionChangedAction.Removed:
+                    this.onItemsRemoved(args);
+                    break;
+                case Juice.CollectionChangedAction.Cleared:
+                    this.onCollectionCleared(args);
+                    break;
+                default:
+                    break;
+            }
+            this.onCollectionChanged(args);
+        }
+        internalAddItems(index, items) {
+            if (this._part_children) {
+                var refElement = this._part_children.children[index];
+                if (!refElement) {
+                    for (let i = 0; i < items.length; i++) {
+                        this._part_children.appendChild(items[i].htmlElement);
+                    }
+                }
+                else {
+                    for (let i = 0; i < items.length; i++) {
+                        var child = items[i].htmlElement;
+                        this._part_children.insertBefore(child, refElement);
+                        refElement = child;
+                    }
+                }
+            }
+        }
+        onItemsAdded(e) {
+            this.internalAddItems(e.index, e.items);
+        }
+        onItemsRemoved(e) {
+            console.warn("TreeItem.onItemsRemoved not implemented");
+        }
+        onCollectionCleared(e) {
+            if (this._part_children) {
+                while (this._part_children.lastChild)
+                    this._part_children.removeChild(this._part_children.lastChild);
+            }
+        }
+        onCollectionChanged(e) {
+        }
+        onIsExpandedChanged() {
+            var firstExpansion = false;
+            if (this._isExpanded) {
+                if (this._neverExpanded)
+                    firstExpansion = true;
+                this._neverExpanded = false;
+                this.htmlElement.classList.add(":expanded");
+            }
+            else {
+                this.htmlElement.classList.remove(":expanded");
+            }
+            this.events.trigger("onPropertyChanged", { propertyName: "isExpanded", propertyValue: this._isExpanded });
+            this.events.trigger("onStateChanged", { isExpanded: this._isExpanded, isFirstExpansion: firstExpansion });
+        }
+        get isExpanded() {
+            return this._isExpanded;
+        }
+        set isExpanded(v) {
+            if (this._isExpanded != v) {
+                this._isExpanded = v;
+                this.onIsExpandedChanged();
+                this.events.trigger("onPropertyChanged", { propertyName: "isExpanded", propertyValue: v });
+            }
+        }
+        get icon() {
+            return this._part_icon.firstChild;
+        }
+        set icon(v) {
+            this._part_icon.innerHTML = "";
+            if (!v) {
+                this._part_icon.style.display = "none";
+            }
+            else if (v instanceof HTMLElement) {
+                this._part_icon.appendChild(v);
+                this._part_icon.style.display = "inline-block";
+            }
+            else if (typeof v === "string") {
+                let img = new Image();
+                this._part_icon.appendChild(img);
+                img.src = v;
+                this._part_icon.style.display = "inline-block";
+            }
+        }
+        get hasChildren() {
+            return this.items.length > 0;
+        }
+    }
+    Juice.TreeItem = TreeItem;
+})(Juice || (Juice = {}));
+var Juice;
+(function (Juice) {
+    class TreeView extends Juice.ItemsControl {
+        constructor(template) {
+            super(template || TreeView.DefaultTreeViewTemplate);
+        }
+        initializeTemplate(templatedElement) {
+            super.initializeTemplate(templatedElement);
+            this._part_children = templatedElement.getPart("children").element;
+        }
+        _onApplyTemplate(templatedElement) {
+            super._onApplyTemplate(templatedElement);
+            this.initializeTemplate(templatedElement);
+        }
+        onItemsAdded(e) {
+            var refElement = this._part_children.children[e.index];
+            if (!refElement) {
+                for (let i = 0; i < e.items.length; i++) {
+                    this._part_children.appendChild(e.items[i].htmlElement);
+                }
+            }
+            else {
+                for (let i = 0; i < e.items.length; i++) {
+                    var child = e.items[i].htmlElement;
+                    this._part_children.insertBefore(child, refElement);
+                    refElement = child;
+                }
+            }
+        }
+        onItemsRemoved(e) {
+            console.warn("TreeView.onItemsRemoved not implemented");
+        }
+        onCollectionCleared(e) {
+            while (this._part_children.lastChild)
+                this._part_children.removeChild(this._part_children.lastChild);
+        }
+        _onItemsCollectionChanged(args) {
+            switch (args.action) {
+                case Juice.CollectionChangedAction.Added:
+                    this.onItemsAdded(args);
+                    break;
+                case Juice.CollectionChangedAction.Removed:
+                    this.onItemsRemoved(args);
+                    break;
+                case Juice.CollectionChangedAction.Cleared:
+                    this.onCollectionCleared(args);
+                    break;
+            }
+        }
+        addChildTreeViewItem(header) {
+            let child = new Juice.TreeViewItem();
+            child.header = header;
+            this.items.add(child);
+            return child;
+        }
+    }
+    TreeView.DefaultTreeViewStyles = `
+        .jui-tree-view {
+        }
+
+        .jui-tree-view > .\\\#content {
+            overflow: auto;
+        }
+
+        .jui-tree-view > .\\\#content > .\\\#children {
+        }
+        `;
+    TreeView.DefaultTreeViewHtmlTemplate = `
+        <template template-class="TreeView">
+            <div class="jui-tree-view">
+                <div template-part="content" class="#content">
+                    <div template-part="children" class="#children"></div>
+                </div>
+            </div>
+        </template>`;
+    TreeView.DefaultTreeViewTemplate = `<style>\n${TreeView.DefaultTreeViewStyles}\n</style>\n${TreeView.DefaultTreeViewHtmlTemplate}`;
+    Juice.TreeView = TreeView;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.ItemsControl,
+        classConstructor: TreeView,
+        className: "Juice.TreeView",
+        tagName: "jui-tree-view"
+    });
+})(Juice || (Juice = {}));
+var Juice;
+(function (Juice) {
+    class TreeViewItem extends Juice.TreeItem {
+        constructor(template) {
+            super(template || TreeViewItem.DefaultTreeViewItemTemplate);
+        }
+        initializeTemplate(templatedElement) {
+            super.initializeTemplate(templatedElement);
+            this._part_expander = templatedElement.withPartElement("expander", (element) => {
+                element.addEventListener("click", this.onExpanderClick.bind(this));
+            });
+            this.header = "TreeViewItem";
+        }
+        onCollectionChanged(e) {
+            if (this._part_expander != null) {
+                this._part_expander.style.opacity = this.items.length > 0 ? "1.0" : "0.0";
+            }
+        }
+        onExpanderClick(e) {
+            this.isExpanded = !this.isExpanded;
+        }
+        addChildTreeViewItem(header) {
+            let child = new TreeViewItem();
+            child.header = header;
+            this.items.add(child);
+            return child;
+        }
+    }
+    TreeViewItem.DefaultTreeViewItemStyles = `
+        .jui-tree-view-item {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+        }
+    
+        .jui-tree-view-item > .\\\#header-frame {
+            display: flex;
+            flex-direction: row;
+            align-items: baseline;
+        }
+    
+        .jui-tree-view-item > .\\\#header-frame > .\\\#expander {
+            margin-right: 8px;
+			opacity: 0;
+        }
+    
+        .jui-tree-view-item > .\\\#header-frame > .\\\#expander > i.-expanded {
+            display: none;
+        }
+        .jui-tree-view-item > .\\\#header-frame > .\\\#expander > i.-collapsed {
+            display: inline-block;
+        }
+    
+        .jui-tree-view-item.\\:expanded > .\\\#header-frame > .\\\#expander > i.-expanded {
+            display: inline-block;
+        }
+        .jui-tree-view-item.\\:expanded > .\\\#header-frame > .\\\#expander > i.-collapsed {
+            display: none;
+        }
+    
+        .jui-tree-view-item > .\\\#header-frame > .\\\#icon {
+            display: none;
+            margin-right: 8px;
+        }
+    
+        .jui-tree-view-item > .\\\#header-frame > .\\\#icon > img {
+            max-width: 20px;
+            max-height: 20px;
+        }
+    
+        .jui-tree-view-item > .\\\#header-frame > .\\\#header {
+            flex-grow: 1;
+        }
+    
+        .jui-tree-view-item > .\\\#header-frame > .\\\#extra {
+        }
+    
+        .jui-tree-view-item > .\\\#content {
+            display: none;
+            padding-left: 16px;
+        }
+    
+        .jui-tree-view-item.\\:expanded > .\\\#content {
+            display: block;
+        }
+    
+        .jui-tree-view-item > .\\\#content > .\\\#children {
+        }
+        `;
+    TreeViewItem.DefaultTreeViewItemHtmlTemplate = `
+        <template template-class="TreeViewItem">
+            <div class="jui-tree-view-item">
+                <div class="#header-frame">
+                    <div template-part="expander"class="#expander"><i class="-expanded fas fa-angle-down"></i><i class="-collapsed fas fa-angle-right"></i></div>
+                    <div template-part="icon"class="#icon"><img /></div>
+                    <div template-part="header"class="#header"></div>
+                    <div template-part="extra"class="#extra"></div>
+                </div>
+                <div template-part="content" class="#content">
+                    <div template-part="children" class="#children"></div>
+                </div>
+            </div>
+        </template>`;
+    TreeViewItem.DefaultTreeViewItemTemplate = `<style>\n${TreeViewItem.DefaultTreeViewItemStyles}\n</style>\n${TreeViewItem.DefaultTreeViewItemHtmlTemplate}`;
+    Juice.TreeViewItem = TreeViewItem;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.HeaderedItemsControl,
+        classConstructor: TreeViewItem,
+        className: "Juice.TreeViewItem",
+        tagName: "jui-tree-view-item"
+    });
+})(Juice || (Juice = {}));
+var Juice;
+(function (Juice) {
     let Internals;
     (function (Internals) {
         function isPrimitive(value) {
@@ -2551,10 +3081,13 @@ var Juice;
     let Internals;
     (function (Internals) {
         Internals.templateDirPath = "/assets/templates/";
-        function getTemplateFile(relativePath) {
-            let path = Internals.templateDirPath + relativePath;
+        function getTemplateFile(path, isAbsolute = false) {
+            let url = path;
+            if (!isAbsolute) {
+                url = Internals.templateDirPath + path;
+            }
             return new Promise((resolve, reject) => {
-                fetch(path)
+                fetch(url)
                     .then((response) => {
                     return response.text();
                 })
@@ -2595,8 +3128,8 @@ var Juice;
         }
         Internals.registerElement = registerElement;
         function setContent(element, content) {
+            element.innerHTML = "";
             if (typeof content === "undefined" || content == null) {
-                element.innerHTML = "";
                 return;
             }
             if (Internals.isPrimitive(content)) {

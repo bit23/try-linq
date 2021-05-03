@@ -5,6 +5,8 @@ namespace TryLinq {
 
     import Application = Juice.Application;
 
+	export const Version = "0.0.1";
+
     export class TryLinqApp extends Application {
 
         private _appPage: AppPage;
@@ -28,7 +30,8 @@ namespace TryLinq {
                 return {
                     mainElement: () => new AppPage(this.applicationService),
                     rootNode: () => document.body,
-                    currentTheme: () => "dark-theme"
+					currentTheme: () => "dark-theme",
+					templateUrls: () => []
                 };
             });
             super.run();

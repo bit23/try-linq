@@ -58,7 +58,7 @@ declare namespace TryLinq {
 declare namespace TryLinq {
     class AppPage extends Juice.Page {
         protected static readonly DefaultAppPageStyles = "\n\n    .app-page {\n        display: flex;\n        flex-direction: column;\n        height: 100%;\n    }\n\n    .app-page-content {\n        flex-grow: 1;\n        overflow: hidden;\n    }";
-        protected static readonly DefaultAppPageHtmlTemplate = "\n    <template template-class=\"AppPage\">\n        <div template-part=\"appRoot\" class=\"app-page\">\n            <div template-part=\"appToolbar\" class=\"app-page-toolbar\"></div>\n            <div template-part=\"appContent\" class=\"app-page-content\"></div>\n            <div class=\"app-page-footer\">\n                <span>linq-g ver. <span template-part=\"appVersion\"></span></span>\n            </div>\n        </div>\n    </template>";
+        protected static readonly DefaultAppPageHtmlTemplate = "\n    <template template-class=\"AppPage\">\n        <div template-part=\"appRoot\" class=\"app-page\">\n            <div template-part=\"appToolbar\" class=\"app-page-toolbar\"></div>\n            <div template-part=\"appContent\" class=\"app-page-content\"></div>\n            <div class=\"app-page-footer\">\n\t\t\t\t<span>try-linq v. <span template-part=\"appVersion\"></span></span>\n\t\t\t\t<span>&nbsp;&nbsp;-&nbsp;&nbsp;</span>\n                <span>linq-g v. <span template-part=\"engineVersion\"></span></span>\n            </div>\n        </div>\n    </template>";
         private static readonly DefaultAppPageTemplate;
         private static readonly DefaultEditorCode;
         private static readonly StoragePrefix;
@@ -67,6 +67,7 @@ declare namespace TryLinq {
         private _part_appToolbar;
         private _part_appContent;
         private _part_appVersion;
+        private _part_engineVersion;
         private _appToolbar;
         private _appPanelsLayout;
         private _dataPanel;
@@ -163,6 +164,7 @@ declare namespace TryLinq {
 }
 declare namespace TryLinq {
     import Application = Juice.Application;
+    const Version = "0.0.1";
     class TryLinqApp extends Application {
         private _appPage;
         constructor();

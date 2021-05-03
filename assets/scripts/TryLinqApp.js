@@ -256,6 +256,9 @@ var TryLinq;
             this._part_appToolbar = templatedElement.getPart("appToolbar").element;
             this._part_appContent = templatedElement.getPart("appContent").element;
             this._part_appVersion = templatedElement.withPartElement("appVersion", (element) => {
+                element.innerText = TryLinq.Version;
+            });
+            this._part_engineVersion = templatedElement.withPartElement("engineVersion", (element) => {
                 element.innerText = Linq.Version;
             });
         }
@@ -429,7 +432,14 @@ var TryLinq;
             return this.downloadJsonData("assets/data/us-500.json");
         }
         loadResult(result) {
-            if (result instanceof Linq.Enumerable) {
+            if (Linq.isGroupedEnumerable(result)) {
+                const tmp = {};
+                for (const grouping of result) {
+                    Reflect.set(tmp, grouping.key, [...grouping]);
+                }
+                result = tmp;
+            }
+            else if (Linq.isEnumerable(result)) {
                 result = result.toArray();
             }
             this._resultsPanel.resultData = result;
@@ -526,7 +536,9 @@ var TryLinq;
             <div template-part="appToolbar" class="app-page-toolbar"></div>
             <div template-part="appContent" class="app-page-content"></div>
             <div class="app-page-footer">
-                <span>linq-g ver. <span template-part="appVersion"></span></span>
+				<span>try-linq v. <span template-part="appVersion"></span></span>
+				<span>&nbsp;&nbsp;-&nbsp;&nbsp;</span>
+                <span>linq-g v. <span template-part="engineVersion"></span></span>
             </div>
         </div>
     </template>`;
@@ -784,6 +796,7 @@ var TryLinq;
 var TryLinq;
 (function (TryLinq) {
     var Application = Juice.Application;
+    TryLinq.Version = "0.0.1";
     class TryLinqApp extends Application {
         constructor() {
             super();
@@ -796,7 +809,8 @@ var TryLinq;
                 return {
                     mainElement: () => new TryLinq.AppPage(this.applicationService),
                     rootNode: () => document.body,
-                    currentTheme: () => "dark-theme"
+                    currentTheme: () => "dark-theme",
+                    templateUrls: () => []
                 };
             });
             super.run();

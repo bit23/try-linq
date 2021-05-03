@@ -1,5 +1,13 @@
 var Linq;
 (function (Linq) {
+    function isEnumerable(object) {
+        return object instanceof IterableEnumerable;
+    }
+    Linq.isEnumerable = isEnumerable;
+    function isGroupedEnumerable(object) {
+        return object instanceof Linq.GroupedEnumerable;
+    }
+    Linq.isGroupedEnumerable = isGroupedEnumerable;
     class EnumerableExtensions {
         static tryGetFirst(source, predicate, result) {
             if (source instanceof Array && !predicate) {
@@ -810,8 +818,22 @@ var Linq;
     }
     Linq.KeyValueGenerator = KeyValueGenerator;
 })(Linq || (Linq = {}));
+var __classPrivateFieldSet = (this && this.__classPrivateFieldSet) || function (receiver, privateMap, value) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to set private field on non-instance");
+    }
+    privateMap.set(receiver, value);
+    return value;
+};
+var __classPrivateFieldGet = (this && this.__classPrivateFieldGet) || function (receiver, privateMap) {
+    if (!privateMap.has(receiver)) {
+        throw new TypeError("attempted to get private field on non-instance");
+    }
+    return privateMap.get(receiver);
+};
 var Linq;
 (function (Linq) {
+    var _elements;
     function assert(expression) {
         if (!expression()) {
             throw new Error("Assert fail: " + expression.toString());
@@ -820,14 +842,14 @@ var Linq;
     class Grouping extends Linq.IterableEnumerable {
         constructor(key, elements) {
             super();
-            this._key = key;
-            this._elements = elements;
+            _elements.set(this, void 0);
+            this.key = key;
+            __classPrivateFieldSet(this, _elements, elements);
         }
-        get key() {
-            return this._key;
-        }
-        *[Symbol.iterator]() {
-            return this._elements[Symbol.iterator]();
+        *[(_elements = new WeakMap(), Symbol.iterator)]() {
+            for (const element of __classPrivateFieldGet(this, _elements)) {
+                yield element;
+            }
         }
     }
     Linq.Grouping = Grouping;
@@ -846,7 +868,9 @@ var Linq;
             if (this._lookup == null) {
                 this._lookup = Linq.Lookup.create(this._source, this._keySelector, this._elementSelector);
             }
-            return this._lookup[Symbol.iterator]();
+            for (const element of this._lookup) {
+                yield element;
+            }
         }
     }
     Linq.GroupedEnumerable = GroupedEnumerable;

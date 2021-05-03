@@ -56,6 +56,7 @@ namespace TryLinq {
             return this._tableView.data;
         }
         public set resultData(v: any) {
+
             this._tableView.data = v;
             this._btnClearResult.isEnabled = !!v;
             this._btnUseResultAsData.isEnabled = !!v;

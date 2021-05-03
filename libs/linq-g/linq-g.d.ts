@@ -8,6 +8,8 @@ declare namespace Linq {
     type ResultSelectorFunc<TFirst, TSecond, TResult> = (first: TFirst, second: TSecond) => TResult;
 }
 declare namespace Linq {
+    function isEnumerable(object: any): object is Linq.IEnumerable<any>;
+    function isGroupedEnumerable(object: any): object is Linq.GroupedEnumerable<any, any>;
     interface IEnumerable<TSource> extends Iterable<TSource> {
         aggregate<TAccumulate, TResult = TAccumulate>(func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>): TResult;
         aggregate<TAccumulate, TResult = TAccumulate>(seed: TAccumulate, func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>): TResult;
@@ -171,10 +173,9 @@ declare namespace Linq {
         readonly key: TKey;
     }
     class Grouping<TKey, TElement> extends IterableEnumerable<TElement> implements IGrouping<TKey, TElement> {
-        private _key;
-        private _elements;
+        #private;
         constructor(key: TKey, elements: Iterable<TElement>);
-        get key(): TKey;
+        readonly key: TKey;
         [Symbol.iterator](): Iterator<TElement>;
     }
     class GroupedEnumerable<TSource, TKey, TElement = TSource> extends IterableEnumerable<IGrouping<TKey, TElement>> implements IEnumerable<IGrouping<TKey, TElement>> {

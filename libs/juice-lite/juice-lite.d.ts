@@ -164,10 +164,71 @@ declare namespace Juice {
     }
 }
 declare namespace Juice {
+    interface EventArgs {
+        [name: string]: any;
+    }
+    type EventHandler<TOwner, TArgs> = (sender: TOwner, eventArgs: TArgs) => void;
+    interface EventOptions {
+        once: boolean;
+    }
+    interface EventGroup<T, TArgs> {
+        eventName: string;
+        entries: Array<EventEntry<T, TArgs>>;
+    }
+    interface EventEntry<T, TArgs> {
+        handler: EventHandler<T, TArgs>;
+        options: EventOptions;
+        bindTarget: any;
+    }
+    interface IEventSet<TOwner, TArgs> {
+        add(handler: EventHandler<TOwner, TArgs>): void;
+        once(handler: EventHandler<TOwner, TArgs>): void;
+        remove(handler: EventHandler<TOwner, TArgs>): void;
+        has(handler: EventHandler<TOwner, TArgs>): boolean;
+        trigger(args?: TArgs): void;
+        stop(): void;
+        resume(): void;
+    }
+    class EventSet<TOwner, TArgs> implements IEventSet<TOwner, TArgs> {
+        private _eventsManager;
+        private _eventName;
+        private _bindTarget;
+        constructor(eventGroup: EventsManager, eventName: string, bindTarget?: any);
+        add(handler: EventHandler<TOwner, TArgs>, bindTarget?: any): void;
+        once(handler: EventHandler<TOwner, TArgs>): void;
+        remove(handler: EventHandler<TOwner, TArgs>): void;
+        has(handler: EventHandler<TOwner, TArgs>): boolean;
+        trigger(args?: TArgs): void;
+        stop(): void;
+        resume(): void;
+    }
+    class EventsManager {
+        private readonly _owner;
+        private readonly _validEventOptions;
+        private _events;
+        private _disabledEventsNames;
+        constructor(owner: any);
+        private getHandlerEntryIndex;
+        attach<TArgs>(eventName: string, eventHandler: EventHandler<any, TArgs>, eventOptions?: EventOptions, bindTarget?: any): void;
+        detach<TArgs>(eventName: string, eventHandler: EventHandler<any, TArgs>): void;
+        trigger<TArgs>(eventName: string, args?: TArgs): void;
+        getHandlersCount(eventName: string): number;
+        hasHandler<TArgs>(eventName: string, eventHandler: EventHandler<any, TArgs>): boolean;
+        stop(eventName?: string): void;
+        resume(eventName?: string): void;
+        create<TArgs>(eventName: string): EventSet<any, TArgs>;
+        createEventArgs(data?: {
+            [name: string]: any;
+        }): EventArgs;
+    }
+}
+declare namespace Juice {
     type TemplateSource = Template | string | HTMLElement;
     class Template {
         private static loadTemplateDocument;
+        private static loadManyTemplatesFromDocument;
         static from(html: string | Document): Template;
+        static manyFrom(html: string | Document): Template[];
         private _element;
         private _styles;
         private _script;
@@ -180,6 +241,7 @@ declare namespace Juice {
         private _template;
         private _parts;
         private _templateNode;
+        private _rootElement;
         constructor(template: Template, templateNode: ParentNode);
         private findParts;
         get rootElement(): Element;
@@ -208,6 +270,8 @@ declare namespace Juice {
         mainElement?: () => UIElement;
         appId?: () => string;
         currentTheme?: () => string;
+        templateRoot?: () => string;
+        templateUrls?: () => string[];
     }
     class ApplicationService {
         readonly application: Application;
@@ -216,6 +280,7 @@ declare namespace Juice {
         readonly setCurrentTheme: (theme: string) => void;
     }
     class Application {
+        static readonly onApplicationLoaded: EventSet<Application, EventArgs>;
         private readonly _defaultOptions;
         private _isRunning;
         private _root;
@@ -251,6 +316,7 @@ declare namespace Juice {
         constructor(template?: TemplateSource);
         protected initializeTemplate(templatedElement: TemplatedElement): void;
         protected onButtonClick(e: Event): void;
+        protected onButtonDoubleClick(e: Event): void;
         private onIsSelectedPropertyChanged;
         onClick: EventSet<ButtonBase, EventArgs>;
         get isSelected(): boolean;
@@ -280,7 +346,7 @@ declare namespace Juice {
         protected initializeTemplate(templatedElement: TemplatedElement): void;
         private onHiddenFileDataChanged;
         protected onButtonClick(e: Event): void;
-        readerHandler(handler: (reader: FileReader) => void): void;
+        readerHandler(handler: (reader: FileReader, file?: File) => void): void;
         get accept(): string;
         set accept(v: string);
         readType: FileReadType;
@@ -380,65 +446,6 @@ declare namespace Juice {
     }
 }
 declare namespace Juice {
-    interface EventArgs {
-        [name: string]: any;
-    }
-    type EventHandler<TOwner, TArgs> = (sender: TOwner, eventArgs: TArgs) => void;
-    interface EventOptions {
-        once: boolean;
-    }
-    interface EventGroup<T, TArgs> {
-        eventName: string;
-        entries: Array<EventEntry<T, TArgs>>;
-    }
-    interface EventEntry<T, TArgs> {
-        handler: EventHandler<T, TArgs>;
-        options: EventOptions;
-        bindTarget: any;
-    }
-    interface IEventSet<TOwner, TArgs> {
-        add(handler: EventHandler<TOwner, TArgs>): void;
-        once(handler: EventHandler<TOwner, TArgs>): void;
-        remove(handler: EventHandler<TOwner, TArgs>): void;
-        has(handler: EventHandler<TOwner, TArgs>): boolean;
-        trigger(args?: TArgs): void;
-        stop(): void;
-        resume(): void;
-    }
-    class EventSet<TOwner, TArgs> implements IEventSet<TOwner, TArgs> {
-        private _eventsManager;
-        private _eventName;
-        private _bindTarget;
-        constructor(eventGroup: EventsManager, eventName: string, bindTarget?: any);
-        add(handler: EventHandler<TOwner, TArgs>, bindTarget?: any): void;
-        once(handler: EventHandler<TOwner, TArgs>): void;
-        remove(handler: EventHandler<TOwner, TArgs>): void;
-        has(handler: EventHandler<TOwner, TArgs>): boolean;
-        trigger(args?: TArgs): void;
-        stop(): void;
-        resume(): void;
-    }
-    class EventsManager {
-        private readonly _owner;
-        private readonly _validEventOptions;
-        private _events;
-        private _disabledEventsNames;
-        constructor(owner: any);
-        private getHandlerEntryIndex;
-        attach<TArgs>(eventName: string, eventHandler: EventHandler<any, TArgs>, eventOptions?: EventOptions, bindTarget?: any): void;
-        detach<TArgs>(eventName: string, eventHandler: EventHandler<any, TArgs>): void;
-        trigger<TArgs>(eventName: string, args?: TArgs): void;
-        getHandlersCount(eventName: string): number;
-        hasHandler<TArgs>(eventName: string, eventHandler: EventHandler<any, TArgs>): boolean;
-        stop(eventName?: string): void;
-        resume(eventName?: string): void;
-        create<TArgs>(eventName: string): EventSet<any, TArgs>;
-        createEventArgs(data?: {
-            [name: string]: any;
-        }): EventArgs;
-    }
-}
-declare namespace Juice {
     class ItemsControlBehaviour extends UIElementBehaviour {
         private _items;
         private initializeItemsControlBehaviour;
@@ -517,13 +524,15 @@ declare namespace Juice {
 }
 declare namespace Juice {
     function getApplication(appId: string): Application;
-    function registerApplication(application: Application): void;
-    function unregisterApplication(application: Application): boolean;
+    function registerApplication(appInstance: Application, appHtmlElement?: Element): void;
+    function unregisterApplication(appInstance: Application): boolean;
 }
 declare namespace Juice {
     class Page extends UIElement {
         constructor(template?: TemplateSource);
     }
+}
+declare namespace Juice {
 }
 declare namespace Juice {
     class Selector {
@@ -569,6 +578,9 @@ declare namespace Juice {
         private loadIterable;
         private loadPrimitive;
         private loadObject;
+        private createValueTreeNode;
+        private buildObjectTree;
+        private buildIterableTree;
         private clearTable;
         clear(): void;
     }
@@ -588,7 +600,59 @@ declare namespace Juice {
         protected _onApplyTemplate(templatedElement: TemplatedElement): void;
         addButton(content?: Content): Button;
         addSeparator(): HtmlContainer;
-        addLabel(text: string): HtmlContainer;
+    }
+}
+declare namespace Juice {
+    abstract class TreeItem extends HeaderedItemsControl {
+        private _isExpanded;
+        private _neverExpanded;
+        private _part_icon;
+        private _part_children;
+        constructor(template?: TemplateSource);
+        protected initializeTemplate(templatedElement: TemplatedElement): void;
+        protected _onApplyTemplate(templatedElement: TemplatedElement): void;
+        protected _onItemsCollectionChanged(args: CollectionChangedEventArgs<UIElement>): void;
+        private internalAddItems;
+        protected onItemsAdded(e: CollectionChangedEventArgs<UIElement>): void;
+        protected onItemsRemoved(e: CollectionChangedEventArgs<UIElement>): void;
+        protected onCollectionCleared(e: CollectionChangedEventArgs<UIElement>): void;
+        protected onCollectionChanged(e: CollectionChangedEventArgs<UIElement>): void;
+        private onIsExpandedChanged;
+        get isExpanded(): boolean;
+        set isExpanded(v: boolean);
+        get icon(): ChildNode;
+        set icon(v: ChildNode);
+        get hasChildren(): boolean;
+        readonly onStateChanged: EventSet<TreeItem, EventArgs>;
+    }
+}
+declare namespace Juice {
+    class TreeView extends ItemsControl {
+        protected static readonly DefaultTreeViewStyles = "\n        .jui-tree-view {\n        }\n\n        .jui-tree-view > .\\#content {\n            overflow: auto;\n        }\n\n        .jui-tree-view > .\\#content > .\\#children {\n        }\n        ";
+        protected static readonly DefaultTreeViewHtmlTemplate = "\n        <template template-class=\"TreeView\">\n            <div class=\"jui-tree-view\">\n                <div template-part=\"content\" class=\"#content\">\n                    <div template-part=\"children\" class=\"#children\"></div>\n                </div>\n            </div>\n        </template>";
+        private static readonly DefaultTreeViewTemplate;
+        private _part_children;
+        constructor(template?: TemplateSource);
+        protected initializeTemplate(templatedElement: TemplatedElement): void;
+        protected _onApplyTemplate(templatedElement: TemplatedElement): void;
+        private onItemsAdded;
+        private onItemsRemoved;
+        private onCollectionCleared;
+        protected _onItemsCollectionChanged(args: CollectionChangedEventArgs<UIElement>): void;
+        addChildTreeViewItem(header: Content): TreeViewItem;
+    }
+}
+declare namespace Juice {
+    class TreeViewItem extends TreeItem {
+        protected static readonly DefaultTreeViewItemStyles = "\n        .jui-tree-view-item {\n            display: flex;\n            flex-direction: column;\n            align-items: stretch;\n        }\n    \n        .jui-tree-view-item > .\\#header-frame {\n            display: flex;\n            flex-direction: row;\n            align-items: baseline;\n        }\n    \n        .jui-tree-view-item > .\\#header-frame > .\\#expander {\n            margin-right: 8px;\n\t\t\topacity: 0;\n        }\n    \n        .jui-tree-view-item > .\\#header-frame > .\\#expander > i.-expanded {\n            display: none;\n        }\n        .jui-tree-view-item > .\\#header-frame > .\\#expander > i.-collapsed {\n            display: inline-block;\n        }\n    \n        .jui-tree-view-item.\\:expanded > .\\#header-frame > .\\#expander > i.-expanded {\n            display: inline-block;\n        }\n        .jui-tree-view-item.\\:expanded > .\\#header-frame > .\\#expander > i.-collapsed {\n            display: none;\n        }\n    \n        .jui-tree-view-item > .\\#header-frame > .\\#icon {\n            display: none;\n            margin-right: 8px;\n        }\n    \n        .jui-tree-view-item > .\\#header-frame > .\\#icon > img {\n            max-width: 20px;\n            max-height: 20px;\n        }\n    \n        .jui-tree-view-item > .\\#header-frame > .\\#header {\n            flex-grow: 1;\n        }\n    \n        .jui-tree-view-item > .\\#header-frame > .\\#extra {\n        }\n    \n        .jui-tree-view-item > .\\#content {\n            display: none;\n            padding-left: 16px;\n        }\n    \n        .jui-tree-view-item.\\:expanded > .\\#content {\n            display: block;\n        }\n    \n        .jui-tree-view-item > .\\#content > .\\#children {\n        }\n        ";
+        protected static readonly DefaultTreeViewItemHtmlTemplate = "\n        <template template-class=\"TreeViewItem\">\n            <div class=\"jui-tree-view-item\">\n                <div class=\"#header-frame\">\n                    <div template-part=\"expander\"class=\"#expander\"><i class=\"-expanded fas fa-angle-down\"></i><i class=\"-collapsed fas fa-angle-right\"></i></div>\n                    <div template-part=\"icon\"class=\"#icon\"><img /></div>\n                    <div template-part=\"header\"class=\"#header\"></div>\n                    <div template-part=\"extra\"class=\"#extra\"></div>\n                </div>\n                <div template-part=\"content\" class=\"#content\">\n                    <div template-part=\"children\" class=\"#children\"></div>\n                </div>\n            </div>\n        </template>";
+        private static readonly DefaultTreeViewItemTemplate;
+        private _part_expander;
+        constructor(template?: TemplateSource);
+        protected initializeTemplate(templatedElement: TemplatedElement): void;
+        protected onCollectionChanged(e: CollectionChangedEventArgs<UIElement>): void;
+        private onExpanderClick;
+        addChildTreeViewItem(header: Content): TreeViewItem;
     }
 }
 declare namespace Juice {
@@ -599,7 +663,7 @@ declare namespace Juice {
 declare namespace Juice {
     namespace Internals {
         var templateDirPath: string;
-        function getTemplateFile(relativePath: string): Promise<Document>;
+        function getTemplateFile(path: string, isAbsolute?: boolean): Promise<Document>;
     }
 }
 declare namespace Juice {
