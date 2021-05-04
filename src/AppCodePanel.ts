@@ -18,7 +18,7 @@ namespace TryLinq {
         flex-grow: 1;
     }`;
 
-        protected static readonly DefaultAppCodePanelHtmlTemplate = `
+        protected static readonly DefaultAppCodePanelHtmlTemplate = /*html*/ `
     <template template-class="AppCodePanel">
         <div template-part="layoutRoot" class="app-tool-panel">
             <div template-part="toolbar" class="app-tool-panel-toolbar"></div>
@@ -72,6 +72,26 @@ namespace TryLinq {
             this._editor = ace.edit(this._part_content);
             //this._editor.setTheme("ace/theme/monokai");
             this._editor.session.setMode("ace/mode/javascript");
+
+			this.toolbar.addSeparator();
+
+			let snippetLabel = this.toolbar.addLabel("snippet");
+			(snippetLabel.htmlElement as HTMLElement).style.marginRight = "5px";
+
+			let snippetSelector = document.createElement("select");
+			for (const snippet of CodeSnippets.allSnippets) {
+				let opt = document.createElement("option");
+				opt.value = snippet.code;
+				opt.text = snippet.name;
+				snippetSelector.appendChild(opt);
+			}
+			let htmlSelect = new Juice.HtmlContainer();
+			htmlSelect.addContent(snippetSelector);
+			this.toolbar.items.add(htmlSelect);
+			
+
+			let btnAddSnippet = this.toolbar.addButton(`<i class="fas fa-plus"></i>`);
+            btnAddSnippet.onClick.add((s, e) => {});
 
             this.toolbar.addSeparator();
 

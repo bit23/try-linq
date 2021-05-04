@@ -63,6 +63,21 @@ var TryLinq;
             this._editor = ace.edit(this._part_content);
             this._editor.session.setMode("ace/mode/javascript");
             this.toolbar.addSeparator();
+            let snippetLabel = this.toolbar.addLabel("snippet");
+            snippetLabel.htmlElement.style.marginRight = "5px";
+            let snippetSelector = document.createElement("select");
+            for (const snippet of TryLinq.CodeSnippets.allSnippets) {
+                let opt = document.createElement("option");
+                opt.value = snippet.code;
+                opt.text = snippet.name;
+                snippetSelector.appendChild(opt);
+            }
+            let htmlSelect = new Juice.HtmlContainer();
+            htmlSelect.addContent(snippetSelector);
+            this.toolbar.items.add(htmlSelect);
+            let btnAddSnippet = this.toolbar.addButton(`<i class="fas fa-plus"></i>`);
+            btnAddSnippet.onClick.add((s, e) => { });
+            this.toolbar.addSeparator();
             let btnLoadCode = new Juice.FileButton();
             btnLoadCode.accept = ".js,.txt";
             btnLoadCode.readType = Juice.FileReadType.Text;

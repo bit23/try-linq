@@ -2660,6 +2660,18 @@ var Juice;
             this.items.add(btn);
             return btn;
         }
+        addLabel(text) {
+            if (typeof text !== "undefined" && text.length > 0) {
+                let span = document.createElement("span");
+                span.classList.add("jui-toolbar-label");
+                span.innerText = text;
+                let label = new Juice.HtmlContainer();
+                label.addContent(span);
+                this.items.add(label);
+                return label;
+            }
+            return null;
+        }
         addSeparator() {
             let sep = new Juice.HtmlContainer();
             sep.htmlElement.classList.add("jui-toolbar-item-separator");
@@ -2692,6 +2704,10 @@ var Juice;
         display: inline-block;
         vertical-align: middle;
     }
+
+	.jui-toolbar-label {
+		font-size: 0.85em;
+	}
 
     .jui-toolbar-button {
         display: inline-block;
