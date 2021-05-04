@@ -441,7 +441,7 @@ var Linq;
             else {
                 for (let element of source) {
                     let value = selector(element);
-                    if (typeof (element) === "number")
+                    if (typeof (value) === "number")
                         result += value;
                 }
             }

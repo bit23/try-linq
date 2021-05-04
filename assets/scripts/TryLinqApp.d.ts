@@ -163,6 +163,58 @@ declare namespace TryLinq {
     }
 }
 declare namespace TryLinq {
+    class CodeSnippets {
+        static readonly aggregate = "data.aggregate( \"seed!\", (accumulate, source) => accumulate + \", \" + source)";
+        static readonly all = "data.all(x => x.first_name.length > 5)";
+        static readonly any = "data.any(x => x.first_name.length < 5)";
+        static readonly append = "data.append({\n\t\t\tfirst_name: \"Mario\",\n\t\t\tlast_name: \"Rossi\"\n\t\t})";
+        static readonly average = "data.average(x => parseInt(x.zip))";
+        static readonly concat = "data.concat([\n\t\t\t{\n\t\t\t\tfirst_name: \"Mario\",\n\t\t\t\tlast_name: \"Rossi\"\n\t\t\t},\n\t\t\t{\n\t\t\t\tfirst_name: \"Luigi\",\n\t\t\t\tlast_name: \"Bianchi\"\n\t\t\t}\n\t\t])";
+        static readonly contains = "data.contains(\"James\", (x, value) => x.first_name == value)";
+        static readonly count = "data.count(x => x.state == \"LA\")";
+        static readonly distinct = "data.select(x => x.state)\n\t\t.distinct()";
+        static readonly elementAt = "data.elementAt(3)";
+        static readonly elementAtOrDefault = "data.elementAtOrDefault(-3)";
+        static readonly except = "data.except([...sequence...])";
+        static readonly first = "data.first()";
+        static readonly firstOrDefault = "data.firstOrDefault(x => x.state = \"ZZ\")";
+        static readonly groupBy = "data.groupBy(\n\t\t\tx => x.state,\n\t\t\tx => x\n\t\t\t)";
+        static readonly groupJoin = "data.groupJoin(\n\t\t\tinnerSequence,\n\t\t\touterKeySelector,\n\t\t\tinnerKeySelector,\n\t\t\tresultSelector,\n\t\t\tcomparer?\n\t\t\t)";
+        static readonly intersect = "data.intersect(...sequence...)";
+        static readonly join = "data.join(\n\t\t\tinnerSequence,\n\t\t\touterKeySelector,\n\t\t\tinnerKeySelector,\n\t\t\tresultSelector,\n\t\t\tcomparer?\n\t\t\t)";
+        static readonly last = "data.last()";
+        static readonly lastOrDefault = "data.lastOrDefault(x => x.state == \"LA\")";
+        static readonly max = "data.max(x => parseInt(x.zip))";
+        static readonly min = "data.min(x => parseInt(x.zip))";
+        static readonly orderBy = "data.orderBy(x => x.last_name)";
+        static readonly orderByDescending = "data.orderByDescending(x => x.last_name)";
+        static readonly prepend = "data.prepend({\n\t\t\tfirst_name: \"Mario\",\n\t\t\tlast_name: \"Rossi\"\n\t\t})";
+        static readonly reverse = "data.reverse()";
+        static readonly select = "select(x => {\n\t\t\treturn {\n\t\t\t\tfirstName: x.first_name,\n\t\t\t\tlastName: x.last_name,\n\t\t\t\tstate: x.state\n\t\t\t}\n\t\t})";
+        static readonly selectMany = "data.selectMany(x => x.first_name)\n\t\t.distinct()";
+        static readonly sequenceEqual = "data.sequenceEqual(...sequence..., comparer?)";
+        static readonly single = "data.single(x => x.first_name == \"James\" && x.last_name == \"Butt\")";
+        static readonly singleOrDefault = "data.singleOrDefault(x => x.first_name == \"James\" && x.last_name == \"Butt\")";
+        static readonly skip = "data.skip(1)";
+        static readonly skipLast = "data.skipLast(3)";
+        static readonly skipWhile = "data.skipWhile(x => x.last_name.length < 13)";
+        static readonly sum = "data.sum(x => x.first_name.length)";
+        static readonly take = "data.take(10)";
+        static readonly takeLast = "data.takeLast(3)";
+        static readonly takeWhile = "data.takeWhile(x => x.last_name.length < 13)";
+        static readonly toArray = "data.toArray()";
+        static readonly toDictionary = "data.toDictionary(\n\t\t\tx => `${x.first_name} ${x.last_name}`,\n\t\t\tx => {\n\t\t\t\treturn {\n\t\t\t\t\tfirstName: x.first_name,\n\t\t\t\t\tlastName: x.last_name\n\t\t\t\t}\n\t\t\t})";
+        static readonly union = "data.union(...sequence...)";
+        static readonly where = "data.where(x => x.last_name.length > 10)";
+        static readonly zip = "data.zip(...sequence..., resultSelector)";
+        private static _snippetsList;
+        static get allSnippets(): {
+            name: string;
+            code: string;
+        }[];
+    }
+}
+declare namespace TryLinq {
     import Application = Juice.Application;
     const Version = "0.0.1";
     class TryLinqApp extends Application {

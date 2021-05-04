@@ -795,6 +795,277 @@ var TryLinq;
 })(TryLinq || (TryLinq = {}));
 var TryLinq;
 (function (TryLinq) {
+    class CodeSnippets {
+        static get allSnippets() {
+            return CodeSnippets._snippetsList;
+        }
+    }
+    CodeSnippets.aggregate = `data.aggregate( "seed!", (accumulate, source) => accumulate + ", " + source)`;
+    CodeSnippets.all = `data.all(x => x.first_name.length > 5)`;
+    CodeSnippets.any = `data.any(x => x.first_name.length < 5)`;
+    CodeSnippets.append = `data.append({
+			first_name: "Mario",
+			last_name: "Rossi"
+		})`;
+    CodeSnippets.average = `data.average(x => parseInt(x.zip))`;
+    CodeSnippets.concat = `data.concat([
+			{
+				first_name: "Mario",
+				last_name: "Rossi"
+			},
+			{
+				first_name: "Luigi",
+				last_name: "Bianchi"
+			}
+		])`;
+    CodeSnippets.contains = `data.contains("James", (x, value) => x.first_name == value)`;
+    CodeSnippets.count = `data.count(x => x.state == "LA")`;
+    CodeSnippets.distinct = `data.select(x => x.state)
+		.distinct()`;
+    CodeSnippets.elementAt = `data.elementAt(3)`;
+    CodeSnippets.elementAtOrDefault = `data.elementAtOrDefault(-3)`;
+    CodeSnippets.except = `data.except([...sequence...])`;
+    CodeSnippets.first = `data.first()`;
+    CodeSnippets.firstOrDefault = `data.firstOrDefault(x => x.state = "ZZ")`;
+    CodeSnippets.groupBy = `data.groupBy(
+			x => x.state,
+			x => x
+			)`;
+    CodeSnippets.groupJoin = `data.groupJoin(
+			innerSequence,
+			outerKeySelector,
+			innerKeySelector,
+			resultSelector,
+			comparer?
+			)`;
+    CodeSnippets.intersect = `data.intersect(...sequence...)`;
+    CodeSnippets.join = `data.join(
+			innerSequence,
+			outerKeySelector,
+			innerKeySelector,
+			resultSelector,
+			comparer?
+			)`;
+    CodeSnippets.last = `data.last()`;
+    CodeSnippets.lastOrDefault = `data.lastOrDefault(x => x.state == "LA")`;
+    CodeSnippets.max = `data.max(x => parseInt(x.zip))`;
+    CodeSnippets.min = `data.min(x => parseInt(x.zip))`;
+    CodeSnippets.orderBy = `data.orderBy(x => x.last_name)`;
+    CodeSnippets.orderByDescending = `data.orderByDescending(x => x.last_name)`;
+    CodeSnippets.prepend = `data.prepend({
+			first_name: "Mario",
+			last_name: "Rossi"
+		})`;
+    CodeSnippets.reverse = `data.reverse()`;
+    CodeSnippets.select = `select(x => {
+			return {
+				firstName: x.first_name,
+				lastName: x.last_name,
+				state: x.state
+			}
+		})`;
+    CodeSnippets.selectMany = `data.selectMany(x => x.first_name)
+		.distinct()`;
+    CodeSnippets.sequenceEqual = `data.sequenceEqual(...sequence..., comparer?)`;
+    CodeSnippets.single = `data.single(x => x.first_name == "James" && x.last_name == "Butt")`;
+    CodeSnippets.singleOrDefault = `data.singleOrDefault(x => x.first_name == "James" && x.last_name == "Butt")`;
+    CodeSnippets.skip = `data.skip(1)`;
+    CodeSnippets.skipLast = `data.skipLast(3)`;
+    CodeSnippets.skipWhile = `data.skipWhile(x => x.last_name.length < 13)`;
+    CodeSnippets.sum = `data.sum(x => x.first_name.length)`;
+    CodeSnippets.take = `data.take(10)`;
+    CodeSnippets.takeLast = `data.takeLast(3)`;
+    CodeSnippets.takeWhile = `data.takeWhile(x => x.last_name.length < 13)`;
+    CodeSnippets.toArray = `data.toArray()`;
+    CodeSnippets.toDictionary = `data.toDictionary(
+			x => \`$\{x.first_name\} $\{x.last_name\}\`,
+			x => {
+				return {
+					firstName: x.first_name,
+					lastName: x.last_name
+				}
+			})`;
+    CodeSnippets.union = `data.union(...sequence...)`;
+    CodeSnippets.where = `data.where(x => x.last_name.length > 10)`;
+    CodeSnippets.zip = `data.zip(...sequence..., resultSelector)`;
+    CodeSnippets._snippetsList = [
+        {
+            name: "aggregate",
+            code: CodeSnippets.aggregate
+        },
+        {
+            name: "all",
+            code: CodeSnippets.all
+        },
+        {
+            name: "any",
+            code: CodeSnippets.any
+        },
+        {
+            name: "append",
+            code: CodeSnippets.append
+        },
+        {
+            name: "average",
+            code: CodeSnippets.average
+        },
+        {
+            name: "concat",
+            code: CodeSnippets.concat
+        },
+        {
+            name: "contains",
+            code: CodeSnippets.contains
+        },
+        {
+            name: "count",
+            code: CodeSnippets.count
+        },
+        {
+            name: "distinct",
+            code: CodeSnippets.distinct
+        },
+        {
+            name: "elementAt",
+            code: CodeSnippets.elementAt
+        },
+        {
+            name: "elementAtOrDefault",
+            code: CodeSnippets.elementAtOrDefault
+        },
+        {
+            name: "except",
+            code: CodeSnippets.except
+        },
+        {
+            name: "first",
+            code: CodeSnippets.first
+        },
+        {
+            name: "firstOrDefault",
+            code: CodeSnippets.firstOrDefault
+        },
+        {
+            name: "groupBy",
+            code: CodeSnippets.groupBy
+        },
+        {
+            name: "groupJoin",
+            code: CodeSnippets.groupJoin
+        },
+        {
+            name: "intersect",
+            code: CodeSnippets.intersect
+        },
+        {
+            name: "join",
+            code: CodeSnippets.join
+        },
+        {
+            name: "last",
+            code: CodeSnippets.last
+        },
+        {
+            name: "lastOrDefault",
+            code: CodeSnippets.lastOrDefault
+        },
+        {
+            name: "max",
+            code: CodeSnippets.max
+        },
+        {
+            name: "min",
+            code: CodeSnippets.min
+        },
+        {
+            name: "orderBy",
+            code: CodeSnippets.orderBy
+        },
+        {
+            name: "orderByDescending",
+            code: CodeSnippets.orderByDescending
+        },
+        {
+            name: "prepend",
+            code: CodeSnippets.prepend
+        },
+        {
+            name: "reverse",
+            code: CodeSnippets.reverse
+        },
+        {
+            name: "select",
+            code: CodeSnippets.select
+        },
+        {
+            name: "selectMany",
+            code: CodeSnippets.selectMany
+        },
+        {
+            name: "sequenceEqual",
+            code: CodeSnippets.sequenceEqual
+        },
+        {
+            name: "single",
+            code: CodeSnippets.single
+        },
+        {
+            name: "singleOrDefault",
+            code: CodeSnippets.singleOrDefault
+        },
+        {
+            name: "skip",
+            code: CodeSnippets.skip
+        },
+        {
+            name: "skipLast",
+            code: CodeSnippets.skipLast
+        },
+        {
+            name: "skipWhile",
+            code: CodeSnippets.skipWhile
+        },
+        {
+            name: "sum",
+            code: CodeSnippets.sum
+        },
+        {
+            name: "take",
+            code: CodeSnippets.take
+        },
+        {
+            name: "takeLast",
+            code: CodeSnippets.takeLast
+        },
+        {
+            name: "takeWhile",
+            code: CodeSnippets.takeWhile
+        },
+        {
+            name: "toArray",
+            code: CodeSnippets.toArray
+        },
+        {
+            name: "toDictionary",
+            code: CodeSnippets.toDictionary
+        },
+        {
+            name: "union",
+            code: CodeSnippets.union
+        },
+        {
+            name: "where",
+            code: CodeSnippets.where
+        },
+        {
+            name: "zip",
+            code: CodeSnippets.zip
+        },
+    ];
+    TryLinq.CodeSnippets = CodeSnippets;
+})(TryLinq || (TryLinq = {}));
+var TryLinq;
+(function (TryLinq) {
     var Application = Juice.Application;
     TryLinq.Version = "0.0.1";
     class TryLinqApp extends Application {
