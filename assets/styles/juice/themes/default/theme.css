@@ -17,6 +17,15 @@
     background-color: rgba(0, 0, 0, 0.1);
 }
 
+/* #################### select #################### */
+
+select {
+	padding: 4px;
+    background: #fff;
+    color: #111;
+    border: 1px solid #ccc;
+    border-radius: 0;
+}
 
 /* #################### .jui-app #################### */
 

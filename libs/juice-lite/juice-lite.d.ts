@@ -61,7 +61,7 @@ declare namespace Juice {
         readonly uid: string;
         get template(): TemplateSource;
         set template(v: TemplateSource);
-        get htmlElement(): Element;
+        get htmlElement(): HTMLElement;
         appendToHtmlElement(parentElement: HTMLElement | string): boolean;
         getApplicationId(): string;
         getApplication(): Application;
@@ -244,7 +244,7 @@ declare namespace Juice {
         private _rootElement;
         constructor(template: Template, templateNode: ParentNode);
         private findParts;
-        get rootElement(): Element;
+        get rootElement(): HTMLElement;
         get templateDefinition(): Template;
         getPart<T>(name: string, throwIfNotExists?: boolean): TemplatePart<T>;
         withPartElement<T>(name: string, action: (element: T) => void, throwIfNotExists?: boolean): T;
@@ -304,7 +304,7 @@ declare namespace Juice {
         configure(configure: () => ApplicationOptions): void;
         run(): void;
         get appId(): string;
-        get rootElement(): Element;
+        get rootElement(): HTMLElement;
         get currentPage(): Page;
         get currentTheme(): string;
     }
@@ -404,8 +404,14 @@ declare namespace Juice {
     }
 }
 declare namespace Juice {
+    interface DialogClosingEventArgs {
+        cancel: boolean;
+    }
+    interface DialogClosedEventArgs {
+        result?: boolean;
+    }
     class Dialog extends UIElement {
-        protected static readonly DefaultDialogStyles = "\n    .jui-dialog {\n        position: fixed;\n        top: 50%;\n        left: 50%;\n        transform: translate(-50%, -50%);\n        /*min-width: 240px;\n        min-height: 100px;\n        border-radius: 4px 4px 2px 2px;\n        background-color: #fff;\n        box-shadow: 0px 0px 5px 5px rgba(0, 0, 0, 0.07);\n        border: 1px solid #c0c0c0;*/\n        display: flex;\n        flex-direction: column;\n    }\n    \n    .jui-dialog-header {\n        height: auto;\n        white-space: nowrap;\n        overflow: hidden;\n        text-overflow: ellipsis;\n        /*padding: 5px 20px;\n        font-weight: 600;\n        border-radius: 4px 4px 0 0;\n        border-bottom: 2px solid #fff;\n        background-color: #f0f0f0;*/\n    }\n    \n    .jui-dialog-content {\n        height: auto;\n        flex-grow: 1;\n        /*border-radius: 0 0 2px 2px;\n        padding: 10px 20px;*/\n    }\n    \n    .jui-dialog-buttons {\n        height: auto;\n        /*text-align: center;\n        padding-top: 10px;\n        padding-bottom: 15px;*/\n    }";
+        protected static readonly DefaultDialogStyles = "\n    .jui-dialog {\n        position: fixed;\n        top: 50%;\n        left: 50%;\n        transform: translate(-50%, -50%);\n        /*min-width: 240px;\n        min-height: 100px;\n        border-radius: 4px 4px 2px 2px;\n        background-color: #fff;\n        box-shadow: 0px 0px 5px 5px rgba(0, 0, 0, 0.07);\n        border: 1px solid #c0c0c0;*/\n        display: flex;\n        flex-direction: column;\n    }\n    \n    .jui-dialog-header {\n        height: auto;\n        white-space: nowrap;\n        overflow: hidden;\n        text-overflow: ellipsis;\n        /*padding: 5px 20px;\n        font-weight: 600;\n        border-radius: 4px 4px 0 0;\n        border-bottom: 2px solid #fff;\n        background-color: #f0f0f0;*/\n    }\n    \n    .jui-dialog-content {\n        height: auto;\n        flex-grow: 1;\n        /*border-radius: 0 0 2px 2px;\n        padding: 10px 20px;*/\n    }\n    \n    .jui-dialog-buttons {\n        height: auto;\n        /*text-align: center;\n        padding-top: 10px;\n        padding-bottom: 20px;*/\n    }";
         protected static readonly DefaultDialogHtmlTemplate = "\n    <template template-class=\"Juice.Dialog\">\n        <div template-part=\"dialog\" class=\"jui-dialog\">\n            <div template-part=\"header\" class=\"jui-dialog-header\"></div>\n            <div template-part=\"content\" class=\"jui-dialog-content\"></div>\n            <div template-part=\"buttons\" class=\"jui-dialog-buttons\"></div>\n        </div>\n    </template>";
         private static readonly DefaultDialogTemplate;
         private _content;
@@ -417,8 +423,13 @@ declare namespace Juice {
         protected initializeTemplate(templatedElement: TemplatedElement): void;
         protected setContent(content: Content): void;
         protected getButtonsContainer(): HTMLElement;
+        protected onDialogClosing(args: DialogClosingEventArgs): void;
+        protected onDialogClosed(args: DialogClosedEventArgs): void;
         show(parent?: Element): void;
-        hide(): void;
+        close(): void;
+        dialogResult?: boolean;
+        readonly onClosing: EventSet<Dialog, DialogClosingEventArgs>;
+        readonly onClosed: EventSet<Dialog, DialogClosedEventArgs>;
     }
     class ModalDialog extends Dialog {
         protected static readonly DefaultModalDialogStyles: string;
@@ -533,6 +544,20 @@ declare namespace Juice {
     }
 }
 declare namespace Juice {
+    class PopUp extends ContentControl {
+        private static readonly DefaultPopUpTemplate;
+        private _isPopUpOpen;
+        private _owner;
+        private _part_popup;
+        constructor(templateSource?: TemplateSource);
+        protected initializeTemplate(templatedElement: TemplatedElement): void;
+        private _onPopUpOpenPropertyChanged;
+        get owner(): HTMLElement;
+        get isPopUpOpen(): boolean;
+        set isPopUpOpen(v: boolean);
+    }
+}
+declare namespace Juice {
 }
 declare namespace Juice {
     class Selector {
@@ -587,7 +612,7 @@ declare namespace Juice {
 }
 declare namespace Juice {
     class Toolbar extends HeaderedItemsControl {
-        protected static readonly DefaultToolbarStyles = "\n    .jui-toolbar {\n        display: flex;\n        flex-flow: row;\n        align-items: center;\n    }\n\n    .jui-toolbar-label {\n        width: auto;\n        /*padding: 0 10px;*/\n        white-space: nowrap;\n    }\n\n    .jui-toolbar-items {\n        width: 100%;\n        white-space: nowrap;\n        overflow-x: hidden;\n        align-items: center;\n        display: flex;\n    }\n\n    .jui-toolbar-items > * {\n        display: inline-block;\n        vertical-align: middle;\n    }\n\n\t.jui-toolbar-label {\n\t\tfont-size: 0.85em;\n\t}\n\n    .jui-toolbar-button {\n        display: inline-block;\n        height: 100%;\n        /*min-width: 32px;\n        min-height: 32px;\n        color: #222;\n        background-color: transparent;\n        outline: 0;\n        border: 0;\n        border-radius: 0;\n        padding: 4px 4px;*/\n        background-position: center center;\n        background-repeat: no-repeat;\n        background-size: auto;\n        position: relative;\n        cursor: default;\n        user-select: none;\n    }\n\n    .jui-toolbar-menu-button > svg {\n        display: block;\n        /*position: relative;\n        top: 50%;\n        left: 50%;\n        transform: translate(-50%,-50%);*/\n    }";
+        protected static readonly DefaultToolbarStyles = "\n    .jui-toolbar {\n        display: flex;\n        flex-flow: row;\n        align-items: center;\n    }\n\n    .jui-toolbar-label {\n        width: auto;\n        /*padding: 0 10px;*/\n        white-space: nowrap;\n    }\n\n    .jui-toolbar-items {\n        width: 100%;\n        white-space: nowrap;\n        overflow: hidden;\n        align-items: center;\n        display: flex;\n    }\n\n    .jui-toolbar-items > * {\n        display: inline-block;\n        vertical-align: middle;\n    }\n\n\t.jui-toolbar-label {\n\t\tfont-size: 0.85em;\n\t}\n\n    .jui-toolbar-button {\n        display: inline-block;\n        height: 100%;\n        /*min-width: 32px;\n        min-height: 32px;\n        color: #222;\n        background-color: transparent;\n        outline: 0;\n        border: 0;\n        border-radius: 0;\n        padding: 4px 4px;*/\n        background-position: center center;\n        background-repeat: no-repeat;\n        background-size: auto;\n        position: relative;\n        cursor: default;\n        user-select: none;\n    }\n\n    .jui-toolbar-menu-button > svg {\n        display: block;\n        /*position: relative;\n        top: 50%;\n        left: 50%;\n        transform: translate(-50%,-50%);*/\n    }";
         protected static readonly DefaultToolbarHtmlTemplate = "\n<template template-class=\"Juice.Toolbar\">\n    <div class=\"jui-toolbar\">\n        <div template-part=\"header\" class=\"jui-toolbar-label\"></div>\n        <div template-part=\"toolbarItems\" class=\"jui-toolbar-items\"></div>\n        <button disabled template-part=\"toolbarMenuButton\" class=\"jui-toolbar-button jui-toolbar-menu-button\">\n            <svg class=\"jui-toolbar-icon-svg\" xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\">\n                <circle cx=\"12\" cy=\"5.5\" r=\"1.5\" />\n                <circle cx=\"12\" cy=\"12\" r=\"1.5\" />\n                <circle cx=\"12\" cy=\"18.5\" r=\"1.5\" />\n            </svg>\n        </button>\n    </div>\n</template>";
         private static readonly DefaultToolbarTemplate;
         private _part_toolbarItems;

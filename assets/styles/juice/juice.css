@@ -89,7 +89,9 @@ body {
 .jui-dialog-buttons {
     text-align: center;
     padding-top: 10px;
-    padding-bottom: 15px;
+    padding-bottom: 20px;
+	padding-left: 20px;
+	padding-right: 20px;
 }
 
 

@@ -202,12 +202,14 @@ namespace TryLinq {
                 (<HTMLElement>this._btnTheme.htmlElement.querySelector("i.fas")).style.display = "none";
                 (<HTMLElement>this._btnTheme.htmlElement.querySelector("i.far")).style.display = "inline-block";
                 this._btnTheme.isSelected = false;
-                this._codePanel.setEditorTheme("ace/theme/monokai");
+                this._dataPanel.setEditorTheme("ace/theme/monokai");
+				this._codePanel.setEditorTheme("ace/theme/monokai");
             }
             else {
                 (<HTMLElement>this._btnTheme.htmlElement.querySelector("i.fas")).style.display = "inline-block";
                 (<HTMLElement>this._btnTheme.htmlElement.querySelector("i.far")).style.display = "none";
                 this._btnTheme.isSelected = true;
+				this._dataPanel.setEditorTheme("ace/theme/textmate");
                 this._codePanel.setEditorTheme("ace/theme/textmate");
             }
         }

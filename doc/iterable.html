@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Document</title>
+
+	<script>
+
+		const someMusicalGenres = new Set(["funk", "disco", "hip-hop", "jazz", "trap", "electronic"]);
+
+		// -------------------------------------------------
+		// iterable example
+		// -------------------------------------------------
+
+		for (const genre of someMusicalGenres) {
+			console.log(genre);
+		}
+
+		// -------------------------------------------------
+		// iterator example
+		// -------------------------------------------------
+
+		let iterator = someMusicalGenres[Symbol.iterator]();
+		let genreResult;
+		while(!(genreResult = iterator.next()).done) {
+			console.log(genreResult.value);
+		}
+
+
+	</script>
+</head>
+<body>
+	
+</body>
+</html>

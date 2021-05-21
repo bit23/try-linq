@@ -39,11 +39,15 @@ declare namespace TryLinq {
         private _part_content;
         private _tableView;
         private _btnResetData;
+        private _btnEditData;
         private _defaultSourceDataHandler;
         private _isCustomData;
+        private _editorTheme;
+        private _currentJsonData;
         constructor(template?: Juice.TemplateSource);
         protected initializeTemplate(templatedElement: Juice.TemplatedElement): void;
         private btnLoadReaderHandler;
+        private onDataLoaded;
         private onBtnResetDataClick;
         private loadDefaultSourceData;
         setDefaultSourceData(v: () => any): void;
@@ -51,6 +55,7 @@ declare namespace TryLinq {
         set customData(v: any);
         get hasCustomData(): boolean;
         resetData(): void;
+        setEditorTheme(themePath: string): void;
         onUserDataLoaded: Juice.EventSet<AppDataPanel, Juice.EventArgs>;
         onResetData: Juice.EventSet<AppDataPanel, Juice.EventArgs>;
     }
@@ -212,6 +217,19 @@ declare namespace TryLinq {
             name: string;
             code: string;
         }[];
+    }
+}
+declare namespace TryLinq {
+    class JsonEditDialog extends Juice.ModalDialog {
+        private _editor;
+        private _jsonData;
+        private part_editorContainer;
+        constructor(templateSource?: Juice.TemplateSource);
+        protected initializeTemplate(templatedElement: Juice.TemplatedElement): void;
+        protected onDialogClosing(args: Juice.DialogClosingEventArgs): void;
+        setEditorTheme(themePath: string): void;
+        get jsonData(): string;
+        set jsonData(v: string);
     }
 }
 declare namespace TryLinq {

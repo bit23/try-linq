@@ -1637,6 +1637,8 @@ var Juice;
         constructor(title, template) {
             super(template || Dialog.DefaultDialogTemplate);
             this._part_header.innerText = title;
+            this.onClosing = new Juice.EventSet(this.events, "onClosing", this);
+            this.onClosed = new Juice.EventSet(this.events, "onClosed", this);
         }
         initializeTemplate(templatedElement) {
             super.initializeTemplate(templatedElement);
@@ -1653,6 +1655,12 @@ var Juice;
         getButtonsContainer() {
             return this._part_buttons;
         }
+        onDialogClosing(args) {
+            this.onClosing.trigger(args);
+        }
+        onDialogClosed(args) {
+            this.onClosed.trigger(args);
+        }
         show(parent) {
             if (parent) {
                 parent.appendChild(this.htmlElement);
@@ -1667,8 +1675,18 @@ var Juice;
                 }
             }
         }
-        hide() {
+        close() {
+            let closingArgs = {
+                cancel: false
+            };
+            this.onDialogClosing(closingArgs);
+            if (closingArgs.cancel) {
+                return;
+            }
             this.htmlElement.remove();
+            this.onDialogClosed({
+                result: this.dialogResult
+            });
         }
     }
     Dialog.DefaultDialogStyles = `
@@ -1710,7 +1728,7 @@ var Juice;
         height: auto;
         /*text-align: center;
         padding-top: 10px;
-        padding-bottom: 15px;*/
+        padding-bottom: 20px;*/
     }`;
     Dialog.DefaultDialogHtmlTemplate = `
     <template template-class="Juice.Dialog">
@@ -1789,7 +1807,7 @@ var Juice;
             let buttonsContainer = this.getButtonsContainer();
             let okButton = new Juice.Button();
             okButton.content = "OK";
-            okButton.onClick.add((s, e) => this.hide(), this);
+            okButton.onClick.add((s, e) => this.close(), this);
             okButton.appendToHtmlElement(buttonsContainer);
             okButton.focus();
         }
@@ -1823,7 +1841,7 @@ var Juice;
         }
         closeDialog(result) {
             this._result = result;
-            this.hide();
+            this.close();
             if (typeof this._onCompleted === "function")
                 this._onCompleted(this._result);
         }
@@ -2164,6 +2182,60 @@ var Juice;
         classConstructor: Page,
         className: "Juice.Page",
         tagName: "jui-page"
+    });
+})(Juice || (Juice = {}));
+var Juice;
+(function (Juice) {
+    class PopUp extends Juice.ContentControl {
+        constructor(templateSource) {
+            super(templateSource || PopUp.DefaultPopUpTemplate);
+        }
+        initializeTemplate(templatedElement) {
+            super.initializeTemplate(templatedElement);
+            this._part_popup = templatedElement.getPart("popup").element;
+        }
+        _onPopUpOpenPropertyChanged(newValue) {
+            this._part_popup.style.display = newValue ? "block" : "none";
+        }
+        get owner() {
+            return this._owner;
+        }
+        get isPopUpOpen() {
+            return this._isPopUpOpen;
+        }
+        set isPopUpOpen(v) {
+            if (this._isPopUpOpen !== v) {
+                this._isPopUpOpen = v;
+                this._onPopUpOpenPropertyChanged(v);
+            }
+        }
+    }
+    PopUp.DefaultPopUpTemplate = `
+		<template template-class="Juice.TableView">
+			<style>
+				.jui-popup-container {
+					position: relative;
+					height: 0 !important;
+				}
+				.jui-popup {
+					position: absolute;
+					left: 0;
+					top: 0;
+				}
+			</style>
+			<div template-part="popup-container" class="jui-popup-container">
+				<div template-part="popup" class="jui-popup" style="display: none;">
+					<div template-part="content" class="jui-button-content"></div>
+				</div>
+			</div>
+		</template>
+		`;
+    Juice.PopUp = PopUp;
+    Juice.Builder.defineComponent({
+        baseClass: Juice.ContentControl,
+        classConstructor: PopUp,
+        className: "Juice.PopUp",
+        tagName: "jui-pop-up"
     });
 })(Juice || (Juice = {}));
 var Juice;
@@ -2695,7 +2767,7 @@ var Juice;
     .jui-toolbar-items {
         width: 100%;
         white-space: nowrap;
-        overflow-x: hidden;
+        overflow: hidden;
         align-items: center;
         display: flex;
     }

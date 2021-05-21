@@ -63,20 +63,27 @@ var TryLinq;
             this._editor = ace.edit(this._part_content);
             this._editor.session.setMode("ace/mode/javascript");
             this.toolbar.addSeparator();
-            let snippetLabel = this.toolbar.addLabel("snippet");
-            snippetLabel.htmlElement.style.marginRight = "5px";
+            let snippetLabel = this.toolbar.addLabel("load snippet");
             let snippetSelector = document.createElement("select");
+            let opt = document.createElement("option");
+            opt.text = "-";
+            snippetSelector.appendChild(opt);
             for (const snippet of TryLinq.CodeSnippets.allSnippets) {
-                let opt = document.createElement("option");
+                opt = document.createElement("option");
                 opt.value = snippet.code;
                 opt.text = snippet.name;
                 snippetSelector.appendChild(opt);
             }
+            snippetSelector.addEventListener("change", (e) => btnAddSnippet.isEnabled = snippetSelector.selectedIndex > 0);
             let htmlSelect = new Juice.HtmlContainer();
             htmlSelect.addContent(snippetSelector);
             this.toolbar.items.add(htmlSelect);
-            let btnAddSnippet = this.toolbar.addButton(`<i class="fas fa-plus"></i>`);
-            btnAddSnippet.onClick.add((s, e) => { });
+            let btnAddSnippet = this.toolbar.addButton(`<i class="fas fa-check"></i>`);
+            btnAddSnippet.isEnabled = false;
+            btnAddSnippet.onClick.add((s, e) => {
+                let snippetCode = snippetSelector.selectedOptions[0].value;
+                this.code = snippetCode;
+            });
             this.toolbar.addSeparator();
             let btnLoadCode = new Juice.FileButton();
             btnLoadCode.accept = ".js,.txt";
@@ -153,6 +160,21 @@ var TryLinq;
             this._tableView = new Juice.TableView();
             this._part_content.appendChild(this._tableView.htmlElement);
             this.toolbar.addSeparator();
+            this._btnEditData = this.toolbar.addButton(`<i class="fas fa-edit"></i>&nbsp;&nbsp;edit data`);
+            this._btnEditData.isEnabled = false;
+            this._btnEditData.onClick.add((s, e) => {
+                const jsonDialog = new TryLinq.JsonEditDialog();
+                jsonDialog.setEditorTheme(this._editorTheme);
+                jsonDialog.jsonData = this._currentJsonData;
+                jsonDialog.onClosed.add((d, de) => {
+                    if (!!de.result) {
+                        const newData = JSON.parse(jsonDialog.jsonData);
+                        this.customData = newData;
+                    }
+                });
+                jsonDialog.show(this.getApplication().rootElement);
+            });
+            this.toolbar.addSeparator();
             let btnLoadData = new Juice.FileButton();
             btnLoadData.accept = ".json,.txt";
             btnLoadData.readType = Juice.FileReadType.Text;
@@ -168,6 +190,10 @@ var TryLinq;
             let data = JSON.parse(reader.result);
             this.customData = data;
             this.onUserDataLoaded.trigger();
+        }
+        onDataLoaded(data) {
+            this._currentJsonData = JSON.stringify(data);
+            this._btnEditData.isEnabled = true;
         }
         onBtnResetDataClick(s, e) {
             if (this._isCustomData) {
@@ -189,6 +215,7 @@ var TryLinq;
                         this._tableView.data = res;
                         this._btnResetData.isEnabled = false;
                         this._isCustomData = false;
+                        this.onDataLoaded(res);
                         this.onResetData.trigger();
                     })
                         .catch((err) => {
@@ -199,6 +226,7 @@ var TryLinq;
                     this._tableView.data = funcResult;
                     this._btnResetData.isEnabled = false;
                     this._isCustomData = false;
+                    this.onDataLoaded(funcResult);
                     this.onResetData.trigger();
                 }
             }
@@ -213,6 +241,7 @@ var TryLinq;
             this._tableView.data = v;
             this._btnResetData.isEnabled = !!v;
             this._isCustomData = true;
+            this.onDataLoaded(v);
         }
         get hasCustomData() {
             return this._isCustomData;
@@ -220,6 +249,9 @@ var TryLinq;
         resetData() {
             this._tableView.clear();
             this.loadDefaultSourceData();
+        }
+        setEditorTheme(themePath) {
+            this._editorTheme = themePath;
         }
     }
     TryLinq.AppDataPanel = AppDataPanel;
@@ -339,12 +371,14 @@ var TryLinq;
                 this._btnTheme.htmlElement.querySelector("i.fas").style.display = "none";
                 this._btnTheme.htmlElement.querySelector("i.far").style.display = "inline-block";
                 this._btnTheme.isSelected = false;
+                this._dataPanel.setEditorTheme("ace/theme/monokai");
                 this._codePanel.setEditorTheme("ace/theme/monokai");
             }
             else {
                 this._btnTheme.htmlElement.querySelector("i.fas").style.display = "inline-block";
                 this._btnTheme.htmlElement.querySelector("i.far").style.display = "none";
                 this._btnTheme.isSelected = true;
+                this._dataPanel.setEditorTheme("ace/theme/textmate");
                 this._codePanel.setEditorTheme("ace/theme/textmate");
             }
         }
@@ -1078,6 +1112,84 @@ var TryLinq;
         },
     ];
     TryLinq.CodeSnippets = CodeSnippets;
+})(TryLinq || (TryLinq = {}));
+var TryLinq;
+(function (TryLinq) {
+    let JsonEditDialogContentTemplate = document.createElement("template");
+    JsonEditDialogContentTemplate.innerHTML = `
+	<div template-part="editorContainer" style="height: 100%; width: 100%; display: flex; flex-direction: column; justify-content: stretch; align-items: stretch;">
+	</div>
+	`;
+    let JsonEditDialogButtonsTemplate = document.createElement("template");
+    JsonEditDialogButtonsTemplate.innerHTML = `
+	<div template-part="buttonsStrip" style="text-align: right;">
+		<button template-part="buttonCancel" class="jui-button json-editor-btn-cancel" style="margin-right: 8px; min-width: 75px;">Cancel</button>
+		<button template-part="buttonOk" class="jui-button json-editor-btn-ok" style="min-width: 75px;">Ok</button>
+	</div>
+	`;
+    class JsonEditDialog extends Juice.ModalDialog {
+        constructor(templateSource) {
+            super("Edit Data", templateSource);
+            this._jsonData = null;
+        }
+        initializeTemplate(templatedElement) {
+            super.initializeTemplate(templatedElement);
+            templatedElement.withPartElement("dialog", (element) => {
+                element.style.width = "80%";
+                element.style.height = "80%";
+            });
+            let contentTemplate = Juice.Template.from(JsonEditDialogContentTemplate.outerHTML);
+            let contentTemplatedElement = contentTemplate.importTemplate();
+            this.part_editorContainer = contentTemplatedElement.getPart("editorContainer").element;
+            this.setContent(contentTemplatedElement.rootElement);
+            this._editor = ace.edit(this.part_editorContainer);
+            this._editor.session.setMode("ace/mode/json5");
+            let buttonsStripTemplate = Juice.Template.from(JsonEditDialogButtonsTemplate.outerHTML);
+            let buttonsStripTemplateElement = buttonsStripTemplate.importTemplate();
+            let buttonsStripElement = buttonsStripTemplateElement.getPart("buttonsStrip").element;
+            let buttonsContainer = templatedElement.getPart("buttons").element;
+            buttonsContainer.appendChild(buttonsStripElement);
+            buttonsStripTemplateElement.withPartElement("buttonCancel", (element) => {
+                element.addEventListener("click", (e) => {
+                    this.dialogResult = false;
+                    this.close();
+                });
+            });
+            buttonsStripTemplateElement.withPartElement("buttonOk", (element) => {
+                element.addEventListener("click", (e) => {
+                    this.dialogResult = true;
+                    this.close();
+                });
+            });
+        }
+        onDialogClosing(args) {
+            if (!!this.dialogResult) {
+                const newData = this._editor.getValue();
+                try {
+                    const jsonData = JSON.parse(newData);
+                    this._jsonData = newData;
+                    args.cancel = false;
+                }
+                catch (err) {
+                    args.cancel = true;
+                }
+            }
+            super.onDialogClosing(args);
+        }
+        setEditorTheme(themePath) {
+            this._editor.setTheme(themePath);
+        }
+        get jsonData() {
+            return this._jsonData;
+        }
+        set jsonData(v) {
+            this._jsonData = v;
+            if (this._editor != null) {
+                this._editor.setValue(this._jsonData);
+            }
+        }
+    }
+    TryLinq.JsonEditDialog = JsonEditDialog;
 })(TryLinq || (TryLinq = {}));
 var TryLinq;
 (function (TryLinq) {

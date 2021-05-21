@@ -9,8 +9,12 @@ namespace TryLinq {
 
         private _tableView: Juice.TableView;
         private _btnResetData: Juice.Button;
+		private _btnEditData: Juice.Button;
         private _defaultSourceDataHandler: () => any;
         private _isCustomData: boolean;
+		private _editorTheme: string;
+
+		private _currentJsonData: string;
 
         constructor(template?: Juice.TemplateSource) {
             super(template);
@@ -29,6 +33,24 @@ namespace TryLinq {
             this._part_content.appendChild(this._tableView.htmlElement);
 
             this.toolbar.addSeparator();
+
+			this._btnEditData = this.toolbar.addButton(`<i class="fas fa-edit"></i>&nbsp;&nbsp;edit data`);
+			this._btnEditData.isEnabled = false;
+			this._btnEditData.onClick.add((s,e) => {
+				const jsonDialog = new JsonEditDialog();
+				jsonDialog.setEditorTheme(this._editorTheme);
+				jsonDialog.jsonData = this._currentJsonData;
+				jsonDialog.onClosed.add((d, de) => {
+					if (!!de.result) {
+						// TODO get modified data and load
+						const newData = JSON.parse(jsonDialog.jsonData);
+						this.customData = newData;
+					}
+				});
+				jsonDialog.show(this.getApplication().rootElement);
+			});
+
+			this.toolbar.addSeparator();
 
             let btnLoadData = new Juice.FileButton();
             btnLoadData.accept = ".json,.txt";
@@ -49,6 +71,11 @@ namespace TryLinq {
             this.customData = data;
             this.onUserDataLoaded.trigger();
         }
+
+		private onDataLoaded(data: any) {
+			this._currentJsonData = JSON.stringify(data);
+			this._btnEditData.isEnabled = true;
+		}
 
         private onBtnResetDataClick(s: Juice.Button, e: Juice.EventArgs) {
             if (this._isCustomData) {
@@ -72,6 +99,7 @@ namespace TryLinq {
                             this._tableView.data = res;
                             this._btnResetData.isEnabled = false;
                             this._isCustomData = false
+							this.onDataLoaded(res);
                             this.onResetData.trigger();
                         })
                         .catch((err: string) => {
@@ -81,6 +109,7 @@ namespace TryLinq {
                     this._tableView.data = funcResult;
                     this._btnResetData.isEnabled = false;
                     this._isCustomData = false
+					this.onDataLoaded(funcResult);
                     this.onResetData.trigger();
                 }
             }
@@ -97,6 +126,8 @@ namespace TryLinq {
             this._tableView.data = v;
             this._btnResetData.isEnabled = !!v;
             this._isCustomData = true;
+			
+			this.onDataLoaded(v);
         }
 
         public get hasCustomData() {
@@ -106,6 +137,10 @@ namespace TryLinq {
         public resetData() {
             this._tableView.clear();
             this.loadDefaultSourceData();
+        }
+
+		public setEditorTheme(themePath: string) {
+            this._editorTheme = themePath;
         }
 
         public onUserDataLoaded: Juice.EventSet<AppDataPanel, Juice.EventArgs>;

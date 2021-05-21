@@ -70,28 +70,45 @@ namespace TryLinq {
             this._btnRun.appendToHtmlElement(this._part_buttonsContainer);
 
             this._editor = ace.edit(this._part_content);
-            //this._editor.setTheme("ace/theme/monokai");
             this._editor.session.setMode("ace/mode/javascript");
+
+			// let popupContainer = new Juice.HtmlContainer();
+			// let popupButton = new Juice.Button();
+			// popupButton.content = '<i class="fa fa-chevron-down"></i>';
+			// popupButton.onClick.add((s,e) => popup.isPopUpOpen = !popup.isPopUpOpen);
+			// let popup = new Juice.PopUp();
+			// popup.content = "popup content";
+			// popupContainer.addContent(popupButton.htmlElement, popup.htmlElement);
+			// this.toolbar.items.add(popupContainer);
 
 			this.toolbar.addSeparator();
 
-			let snippetLabel = this.toolbar.addLabel("snippet");
-			(snippetLabel.htmlElement as HTMLElement).style.marginRight = "5px";
+			let snippetLabel = this.toolbar.addLabel("load snippet");
+			//(snippetLabel.htmlElement as HTMLElement).style.marginRight = "5px";
 
 			let snippetSelector = document.createElement("select");
+			let opt = document.createElement("option");
+			opt.text = "-";
+			snippetSelector.appendChild(opt);
 			for (const snippet of CodeSnippets.allSnippets) {
-				let opt = document.createElement("option");
+				opt = document.createElement("option");
 				opt.value = snippet.code;
 				opt.text = snippet.name;
 				snippetSelector.appendChild(opt);
 			}
+			snippetSelector.addEventListener("change", (e) => btnAddSnippet.isEnabled = snippetSelector.selectedIndex > 0)
+
 			let htmlSelect = new Juice.HtmlContainer();
 			htmlSelect.addContent(snippetSelector);
 			this.toolbar.items.add(htmlSelect);
-			
 
-			let btnAddSnippet = this.toolbar.addButton(`<i class="fas fa-plus"></i>`);
-            btnAddSnippet.onClick.add((s, e) => {});
+			let btnAddSnippet = this.toolbar.addButton(`<i class="fas fa-check"></i>`);
+			btnAddSnippet.isEnabled = false;
+            btnAddSnippet.onClick.add((s, e) => {
+				let snippetCode = snippetSelector.selectedOptions[0].value;
+				//this._editor.insert(snippetCode);
+				this.code = snippetCode;
+			});
 
             this.toolbar.addSeparator();
 
