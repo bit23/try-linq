@@ -6,8 +6,9 @@ Gli iteratori in javascript sono concepiti come dei "protocolli". Un protocollo 
 Un protocollo può essere implementato da un qualunque oggetto che segua dette convenzioni, 
 nel caso degli iteratori esistono due tipi di protocollo: il protocollo *iterable* ed il protocollo *iterator*.
 
+<br/>
 
-#### The *iterator* protocol
+### The *iterator* protocol
 
 Il protocollo *iterator* definisce il modo per produrre una sequenza di valori, finita o infinita che sia. Tale comportamento viene implementato tramite il metodo ```next()``` che permette di ottenere il valore successivo della sequenza.  
 Tale metodo deve essere definito come una function, senza argomenti, che restituisca un oggetto *IteratorResult* che a sua volta implementi le seguenti proprietà:  
@@ -30,8 +31,9 @@ Il metodo ```next()``` dovrà sempre restituire un oggetto che contenga queste p
 > approfondisci l'argomento:  
 > https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterator_protocol
 
+<br/>
 
-#### The *iterable* protocol
+### The *iterable* protocol
 
 Un *iterable* è fondamentalmente un oggetto che può essere ciclato tramite un costrutto **for...of**:
 ```javascript
@@ -42,6 +44,10 @@ for (const item of iterable) {
 Oggetti di tipo string, Array, Set, Map sono alcuni degli oggetti built-in che implementano il comportamento di *iterable*.  
 Per poter essere iterabile un oggetto deve avere una proprietà registrata con la chiave ```[Symbol.iterator]``` di tipo function senza argomenti, la quale restituisca un iteratore. La proprietà può essere implementata direttamente sull'oggetto o in uno degli oggetti della sua catena di prototipi.  
 La function può essere di tipo classico o una funzione generatrice:
+
+<br/>
+
+Nel caso della funzione classica il risultato restituito dovrà essere l'istanza di un oggetto *iterator*. 
 ```javascript
 // funzione classica
 function () {
@@ -54,21 +60,26 @@ function () {
     	}
 	}
 }
+```
+<br/>
 
+Nel caso della funzione generatrice il risultato verrà fornito ciclicamente tramite l'utilizzo della parola chiave ```yield```.
+```javascript
 // generator function
 function* () {
 	yield value;
 }
 ```
-Nel caso della funzione classica il risultato restituito dovrà essere l'istanza di un oggetto *iterator*. 
 
-Nel caso della funzione generatrice il risultato verrà fornito ciclicamente tramite l'utilizzo della parola chiave ```yield```. E' possibile terminare l'esecuzione di una funzione generatrice utilizzando la parola chiave ```return``` o proseguendo l'esuczione del corpo della funzione fino alla fine e quindi all'uscita.
+E' possibile terminare l'esecuzione di una funzione generatrice utilizzando la parola chiave ```return``` o proseguendo l'esucuzione del corpo della funzione fino alla fine e quindi all'uscita.  
+<br/>
 
 Essendo tali funzioni definite sull'oggetto *iterable*, potranno accedere alle proprieà dell'oggetto stesso e quindi utilizzarne i valori per produrre il risultato corrente o non produrne affatto (nel caso di funzione generatrice).  
 
 > approfondisci l'argomento:  
 > https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Iteration_protocols#the_iterable_protocol
 
+<br/>
 
 ## I generatori
 
@@ -91,27 +102,106 @@ Un oggetto *Generator* è costituito dai seguenti membri:
 > (*iterable protocol*)  
 > Restituisce implicitamente l'iteratore per i cicli
 
-Per utilizzare una sequenza prodotta è possibile interagire con il generatore in più modi:
 
-- accesso tramite ciclo **for..of**
-- accesso tramite XXXX ```[...iterable]```
-- accesso diretto tramite il metodo ```next()```
-- accesso tramite ciclo **while** e metodo ```next()```
-  
-### Utilizzo di un generatore tramite protocollo *iterable*
 
-L'utilizzo del generatore come iterable è probabilmente la forma più semplice per accedere alla sequenza prodotta.  
+
+
+
+
+
+
+
+
+Essendo il generatore sia un *iterator* che un *iterable* è possibile accedere alla sequenza di valori prodotta dal generatore sia tramite l'uso del metodo ```next()```, ad esempio in un ciclo **while** o con una chiamata diretta, che tramite l'uso della proprietà ```[Symbol.iterator]```, in maniera trasparente, in un ciclo **for..of**.  
+
+### Utilizzo di un generatore tramite protocollo *iterator*
+
 Immaginando di avere un generatore nella seguente forma  
 
 ```javascript
 const g = function* () {
-
+  yield 1;
+  yield 2;
+  yield 3;
 };
 ```
 
-#### Utilizzo di un generatore in un ciclo for...of
+è possibile accedere agli elementi della sequenza generata chiamando il metodo ```next()``` sul risultato della funzione
 
-#### Utilizzo di un generatore come XXXX [...iterable]
+```javascript
+const iterator = g();
+
+console.log(iterator.next().value);
+// output: 1
+console.log(iterator.next().value);
+// output: 2
+console.log(iterator.next().value);
+// output: 3
+console.log(iterator.next().value);
+// output: undefined
+```
+Come è possibile capire dall'esempio, questo modo di utilizzo ha senso solo se si conosce a priori il numero di elementi prodotti, altrimenti da un certo momento in poi verrà sempre restituito ```undefined``` senza che si possa capire se è un valore valido prodotto dal generatore o si tratti del valore restituito dopo la conclusione.
+Pertanto è necessario verificare il valore della proprietà **done** per capire in quale stato del generatore ci troviamo.
+
+```javascript
+const iteratorResult = iterator.next();
+if (iteratorResult.done) {
+  console.log("completed");
+}
+else {
+  console.log(iteratorResult.value);
+}
+```
+Mettendo insieme le due cose è possibile creare un cilo **while** che possa accedere ai valori generati fin tanto che esiste un risultato
+
+```javascript
+const iterator = g();
+
+let iteratorResult;
+while (!(iteratorResult = iterator.next()).done) {
+  console.log(iteratorResult.value);
+}
+
+// output:
+// 1
+// 2
+// 3
+```
+  
+### Utilizzo di un generatore tramite protocollo *iterable*
+
+L'utilizzo del generatore come iterable è probabilmente la forma più semplice per accedere alla sequenza prodotta.  
+Immaginando di avere il solito generatore
+
+```javascript
+const g = function* () {
+  yield 1;
+  yield 2;
+  yield 3;
+};
+```
+si potranno ciclare i valori prodotti semplicemente scorrendoli in un ciclo **for..of**.
+```javascript
+const iterable = g();
+for (const value of iterable) {
+  console.log(v);
+}
+
+// output:
+// 1
+// 2
+// 3
+```
+Internamente, in maniera del tutto trasparente allo sviluppatore, verrà chiamata la funzione generatrice sfruttando il meccanismo di pausa e restituzione del valore (che nell'esempio è rappresentato dalla variabile ```value```), fino alla produzione dell'ultimo risultato (la cui proprietà **done**, non visibile allo sviluppatore, sarà uguale a ```true```) che determinerà l'uscita dal ciclo **for..of**.
+
+E' anche possibile trasformare in un array i valori generati, utilizzando la nuova *spread syntax* ```...```
+
+```javascript
+const iterable = g();
+console.log([...iterable]);
+// output: [1, 2, 3]
+```
+
 
 ### Utilizzo di un generatore tramite protocollo *iterator*
 
