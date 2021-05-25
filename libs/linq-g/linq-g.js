@@ -8,6 +8,36 @@ var Linq;
         return object instanceof Linq.GroupedEnumerable;
     }
     Linq.isGroupedEnumerable = isGroupedEnumerable;
+    function isIterator(object) {
+        return Reflect.has(object, "next") && typeof Reflect.get(object, "next") === "function";
+    }
+    Linq.isIterator = isIterator;
+    function composeComparers(firstComparer, secondComparer) {
+        return (a, b) => firstComparer(a, b) || secondComparer(a, b);
+    }
+    Linq.composeComparers = composeComparers;
+    class IteratorIterableWrapper {
+        constructor(iterator) {
+            this._source = iterator;
+            this._buffer = [];
+            this._buffered = false;
+        }
+        *[Symbol.iterator]() {
+            if (this._buffered) {
+                for (const item of this._buffer) {
+                    yield item;
+                }
+            }
+            else {
+                let item;
+                while (!(item = this._source.next()).done) {
+                    this._buffer.push(item.value);
+                    yield item.value;
+                }
+                this._buffered = true;
+            }
+        }
+    }
     class EnumerableExtensions {
         static tryGetFirst(source, predicate, result) {
             if (source instanceof Array && !predicate) {
@@ -315,28 +345,12 @@ var Linq;
             return new Enumerable(iterator);
         }
         static orderBy(source, keySelector) {
-            var keyValueIterator = new Linq.KeyValueGenerator(source, keySelector);
-            var orderedArray = [...keyValueIterator].sort((a, b) => {
-                if (a.key < b.key)
-                    return -1;
-                if (a.key > b.key)
-                    return 1;
-                return 0;
-            }).map(v => v.value);
-            var iterator = new Linq.SimpleIterator(orderedArray);
-            return new Enumerable(iterator);
+            const orderByIterator = new Linq.OrderByIterator(source, keySelector, false);
+            return new OrderedEnumerable(orderByIterator);
         }
         static orderByDescending(source, keySelector) {
-            var keyValueIterator = new Linq.KeyValueGenerator(source, keySelector);
-            var orderedArray = [...keyValueIterator].sort((a, b) => {
-                if (a.key < b.key)
-                    return 1;
-                if (a.key > b.key)
-                    return -1;
-                return 0;
-            }).map(v => v.value);
-            var iterator = new Linq.SimpleIterator(orderedArray);
-            return new Enumerable(iterator);
+            const orderByIterator = new Linq.OrderByIterator(source, keySelector, true);
+            return new OrderedEnumerable(orderByIterator);
         }
         static prepend(source, item) {
             let iterator = new Linq.PrependIterator(source, item);
@@ -458,6 +472,14 @@ var Linq;
         static takeWhile(source, predicate) {
             let iterator = new Linq.TakeWhileIterator(source, predicate);
             return new Enumerable(iterator);
+        }
+        static thenBy(source, keySelector) {
+            const thenByIterator = new Linq.ThenByIterator(source, keySelector, false);
+            return new OrderedEnumerable(thenByIterator);
+        }
+        static thenByDescending(source, keySelector) {
+            const thenByIterator = new Linq.ThenByIterator(source, keySelector, true);
+            return new OrderedEnumerable(thenByIterator);
         }
         static toArray(source) {
             if (source instanceof Array)
@@ -711,7 +733,12 @@ var Linq;
     class Enumerable extends IterableEnumerable {
         constructor(source) {
             super();
-            this._source = source;
+            if (isIterator(source)) {
+                this._source = new IteratorIterableWrapper(source);
+            }
+            else {
+                this._source = source;
+            }
         }
         static from(source) {
             return new Enumerable(source);
@@ -735,6 +762,18 @@ var Linq;
         }
     }
     Linq.Enumerable = Enumerable;
+    class OrderedEnumerable extends Enumerable {
+        constructor(source) {
+            super(source);
+        }
+        thenBy(keySelector) {
+            return EnumerableExtensions.thenBy(this._source, keySelector);
+        }
+        thenByDescending(keySelector) {
+            return EnumerableExtensions.thenByDescending(this._source, keySelector);
+        }
+    }
+    Linq.OrderedEnumerable = OrderedEnumerable;
 })(Linq || (Linq = {}));
 var Linq;
 (function (Linq) {
@@ -814,6 +853,7 @@ var Linq;
                 }
                 yield { key: key, value: value };
             }
+            this.reset();
         }
     }
     Linq.KeyValueGenerator = KeyValueGenerator;
@@ -1543,6 +1583,40 @@ var Linq;
         }
     }
     Linq.XPathResultIterator = XPathResultIterator;
+    class OrderedIterator extends BaseIterator {
+        constructor(iterable, comparer) {
+            super(iterable);
+            this.comparer = comparer;
+        }
+        static createComparer(keySelector, descending) {
+            return (a, b) => {
+                const aKey = keySelector(a);
+                const bKey = keySelector(b);
+                if (aKey > bKey)
+                    return descending ? -1 : 1;
+                if (aKey < bKey)
+                    return descending ? 1 : -1;
+                return 0;
+            };
+        }
+        *[Symbol.iterator]() {
+            const orderedSource = [...this.iterable].sort(this.comparer);
+            yield* orderedSource;
+        }
+    }
+    Linq.OrderedIterator = OrderedIterator;
+    class OrderByIterator extends OrderedIterator {
+        constructor(iterable, keySelector, descending = false) {
+            super(iterable, OrderedIterator.createComparer(keySelector, descending));
+        }
+    }
+    Linq.OrderByIterator = OrderByIterator;
+    class ThenByIterator extends OrderedIterator {
+        constructor(iterable, keySelector, descending = false) {
+            super(iterable, Linq.composeComparers(iterable.comparer, OrderedIterator.createComparer(keySelector, descending)));
+        }
+    }
+    Linq.ThenByIterator = ThenByIterator;
 })(Linq || (Linq = {}));
 var Linq;
 (function (Linq) {

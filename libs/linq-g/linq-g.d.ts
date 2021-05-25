@@ -10,6 +10,8 @@ declare namespace Linq {
 declare namespace Linq {
     function isEnumerable(object: any): object is Linq.IEnumerable<any>;
     function isGroupedEnumerable(object: any): object is Linq.GroupedEnumerable<any, any>;
+    function isIterator(object: any): object is Iterator<any>;
+    function composeComparers<T>(firstComparer: (a: T, b: T) => number, secondComparer: (a: T, b: T) => number): ((a: T, b: T) => number);
     interface IEnumerable<TSource> extends Iterable<TSource> {
         aggregate<TAccumulate, TResult = TAccumulate>(func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>): TResult;
         aggregate<TAccumulate, TResult = TAccumulate>(seed: TAccumulate, func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>): TResult;
@@ -42,8 +44,8 @@ declare namespace Linq {
         min(ignoreNonNumberItems?: boolean): number;
         min(selector?: SelectorFunc<TSource, number>): number;
         ofType<TResult>(type: new () => TResult): IEnumerable<TResult>;
-        orderBy<TField>(keySelector: SelectorFunc<TSource, TField>): IEnumerable<TSource>;
-        orderByDescending<TField>(keySelector: SelectorFunc<TSource, TField>): IEnumerable<TSource>;
+        orderBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
+        orderByDescending<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
         prepend(item: TSource): IEnumerable<TSource>;
         reverse(): IEnumerable<TSource>;
         select<TResult>(selector: SelectorFunc<TSource, TResult>): IEnumerable<TResult>;
@@ -64,6 +66,13 @@ declare namespace Linq {
         union(sequence: Iterable<TSource>): IEnumerable<TSource>;
         where(predicate: PredicateFunc<TSource>): IEnumerable<TSource>;
         zip<TSecond, TResult>(sequence: Iterable<TSecond>, resultSelector: ResultSelectorFunc<TSource, TSecond, TResult>): IEnumerable<TResult>;
+    }
+    interface OrderedIterable<TSource> extends Iterable<TSource> {
+        readonly comparer: ComparerFunc<TSource>;
+    }
+    interface IOrderedEnumerable<TSource> extends IEnumerable<TSource> {
+        thenBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
+        thenByDescending<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
     }
     abstract class IterableEnumerable<TSource> implements IEnumerable<TSource> {
         abstract [Symbol.iterator](): Iterator<TSource>;
@@ -98,8 +107,8 @@ declare namespace Linq {
         min(ignoreNonNumberItems?: boolean): number;
         min(selector?: SelectorFunc<TSource, number>): number;
         ofType<TResult>(type: new () => TResult): IEnumerable<TResult>;
-        orderBy<TField>(keySelector: SelectorFunc<TSource, TField>): IEnumerable<TSource>;
-        orderByDescending<TField>(keySelector: SelectorFunc<TSource, TField>): IEnumerable<TSource>;
+        orderBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
+        orderByDescending<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
         prepend(item: TSource): IEnumerable<TSource>;
         reverse(): IEnumerable<TSource>;
         select<TResult>(selector: SelectorFunc<TSource, TResult>): IEnumerable<TResult>;
@@ -128,36 +137,45 @@ declare namespace Linq {
         static repeat<TResult>(element: TResult, count: number): IEnumerable<TResult>;
         static repeatElement<TResult>(callback: (index: number) => TResult, count: number, userData?: any): IEnumerable<TResult>;
         static empty<TSource>(): IEnumerable<TSource>;
-        private _source;
-        constructor(source: Iterable<T>);
+        protected _source: Iterable<T>;
+        constructor(source: Iterable<T> | Iterator<T>);
         [Symbol.iterator](): Iterator<T>;
+    }
+    class OrderedEnumerable<T> extends Enumerable<T> implements IOrderedEnumerable<T> {
+        constructor(source: OrderedIterable<T>);
+        thenBy<TKey>(keySelector: SelectorFunc<T, TKey>): IOrderedEnumerable<T>;
+        thenByDescending<TKey>(keySelector: SelectorFunc<T, TKey>): IOrderedEnumerable<T>;
     }
 }
 declare namespace Linq {
-    abstract class Generator {
+    abstract class Generator<T> {
         protected _index: number;
-        protected _current: any;
+        protected _current: T;
+        constructor();
         get index(): number;
-        get current(): any;
+        get current(): T;
         reset(): void;
-        abstract [Symbol.iterator](): any;
+        abstract [Symbol.iterator](): Iterator<T>;
     }
-    class UserGenerator extends Generator {
+    class UserGenerator<T> extends Generator<T> {
         private callback;
         private count;
         private userData;
         constructor(callback: (index: number, userData?: any) => any, count: number, userData: any);
-        [Symbol.iterator](): any;
+        [Symbol.iterator](): Iterator<T>;
     }
-    class NumberGenerator extends Generator {
+    class NumberGenerator extends Generator<number> {
         private start;
         private end;
         private step;
         private currentValue;
         constructor(start: number, end: number, step: number);
-        [Symbol.iterator](): any;
+        [Symbol.iterator](): Iterator<number>;
     }
-    class KeyValueGenerator<TSource, TKey, TValue = TSource> extends Generator {
+    class KeyValueGenerator<TSource, TKey, TValue = TSource> extends Generator<{
+        key: TKey;
+        value: TValue;
+    }> {
         private _iterable;
         private _keySelector;
         private _valueSelector;
@@ -373,6 +391,18 @@ declare namespace Linq {
         get index(): number;
         get current(): any;
         [Symbol.iterator](): Iterator<any>;
+    }
+    class OrderedIterator<TSource> extends BaseIterator<TSource> implements OrderedIterable<TSource> {
+        protected static createComparer<TSource, TKey>(keySelector: SelectorFunc<TSource, TKey>, descending: boolean): ComparerFunc<TSource>;
+        constructor(iterable: Iterable<TSource>, comparer: ComparerFunc<TSource>);
+        readonly comparer: ComparerFunc<TSource>;
+        [Symbol.iterator](): Iterator<TSource>;
+    }
+    class OrderByIterator<TSource, TKey> extends OrderedIterator<TSource> {
+        constructor(iterable: Iterable<TSource>, keySelector: SelectorFunc<TSource, TKey>, descending?: boolean);
+    }
+    class ThenByIterator<TSource, TKey> extends OrderedIterator<TSource> {
+        constructor(iterable: OrderedIterable<TSource>, keySelector: SelectorFunc<TSource, TKey>, descending?: boolean);
     }
 }
 declare namespace Linq {
