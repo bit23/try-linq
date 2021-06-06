@@ -1,41 +1,25 @@
-# try-linq
+# TRY-LINQ
 
-Applicazione con interfaccia web per la composizione di query linq, eseguite tramite la libreria **linq-g**.
+TRY-LINQ è una applicazione web basata sulla libreria [LINQ-G](https://github.com/bit23/linq-g), inizialmente sviluppata per testare la libreria stessa ma che ben presto si è trasformata in uno strumento di utilità per eseguire query linq.
 
-...
+![TRY-LINQ](doc/TRY-LINQ.jpg)
 
-## Configurazione dell'ambiente
+E’ possibile caricare dati da file esterni o aprire la finestra di editing per poter modificare i dati correnti. I tipi di dato validi sono JSON Array, JSON Object e Stringhe.
 
-Aprire VSCODE e creare un nuovo workspace. Aggiungere al workspace le cartelle:
-- linq-g
-- juice-lite
-- try-linq
+![TRY-LINQ](doc/data-panel.jpg)
 
-Nello stesso ordine:
-- Installare i pacchetti per ogni progetto con il comando ```npm install```.  
-- Compilare ogni progetto con il comando ```npm build```.
+E’ possibile definire query linq più o meno complesse direttamente nell’editor di codice integrato, in modo da poterne modificare in tempo reale la logica. E’ disponibile anche un elenco di snippets utili per testare ogni funzionalità della libreria.
 
-## Esecuzione
+![TRY-LINQ](doc/code-panel.jpg)
 
-Installare l'estensione **Live Server** per VSCODE.  
-Espandere il nodo del progetto **try-linq** fare click con il tasto destro e selezionare **Open with Live Server**.
+Nell’ultimo pannello saranno visualizzati i risultati della query applicata ai dati. Sarà inoltre possibile scegliere di utilizzare i risultati come dati di partenza o esportarli se necessario.
 
+![TRY-LINQ](doc/result-panel.jpg)
 
+Queste sono le funzionalità principali dell’applicazione. Di secondaria importanza sono: il salvataggio automatico su local-storage dei dati inseriti e della ultima query eseguita, la possibilità di modificare il layout dell’applicazione tra tre predefiniti, passare da tema dark a tema light e viceversa.
 
+Per provare l’applicazione:
+http://……
 
-## Stato attuale
-
-**try-linq**  
-- import gestire i file txt con dentro stringhe
-- export in base al risultato (primitiva, array, object)
-
-**linq-g**  
-- Fix:
-    - verificare il risultato di groupBy
-    - verificare l'uso e l'utilità della classe Lookup
-- Missing features:
-    - OrderedEnumerable mancante (thenBy)
-- New Features:
-    - metodo ToQuery per generare query compatibili con DynamicLinq
-    - verificare la possibilità di concatenare espressioni per il metodo where e simili
-    - caricamento di snippet di codice di esempio da un elenco a menu (uno per ogni metodo)
+Codice sorgente di LINQ-G:
+https://github.com/bit23/linq-g

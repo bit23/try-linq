@@ -1,4 +1,5 @@
 declare namespace Linq {
+    type EnumerableSource<TSource> = Iterable<TSource> | Iterator<TSource>;
     type AccumulatorFunc<TAccumulate, TSource, TResult> = (aggregate: TAccumulate, next: TSource) => TResult;
     type SelectorFunc<TSource, TResult> = (source: TSource, index?: number) => TResult;
     type PredicateFunc<TSource> = (source: TSource, index?: number) => boolean;
@@ -8,72 +9,6 @@ declare namespace Linq {
     type ResultSelectorFunc<TFirst, TSecond, TResult> = (first: TFirst, second: TSecond) => TResult;
 }
 declare namespace Linq {
-    function isEnumerable(object: any): object is Linq.IEnumerable<any>;
-    function isGroupedEnumerable(object: any): object is Linq.GroupedEnumerable<any, any>;
-    function isIterator(object: any): object is Iterator<any>;
-    function composeComparers<T>(firstComparer: (a: T, b: T) => number, secondComparer: (a: T, b: T) => number): ((a: T, b: T) => number);
-    interface IEnumerable<TSource> extends Iterable<TSource> {
-        aggregate<TAccumulate, TResult = TAccumulate>(func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>): TResult;
-        aggregate<TAccumulate, TResult = TAccumulate>(seed: TAccumulate, func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>): TResult;
-        aggregate<TAccumulate, TResult = TAccumulate>(seed: TAccumulate, func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>, resultSelector: SelectorFunc<TAccumulate, TResult>): TResult;
-        all(predicate: PredicateFunc<TSource>): boolean;
-        any(predicate?: PredicateFunc<TSource>): boolean;
-        append(item: TSource): IEnumerable<TSource>;
-        average(ignoreNonNumberItems?: boolean): number;
-        average(selector?: SelectorFunc<TSource, number>): number;
-        concat(sequence: Iterable<TSource>): IEnumerable<TSource>;
-        contains(value: TSource, comparer?: EqualityComparerFunc<TSource>): boolean;
-        count(predicate?: PredicateFunc<TSource>): number;
-        defaultIfEmpty(defaultValue: TSource): IEnumerable<TSource>;
-        distinct(): IEnumerable<TSource>;
-        elementAt(index: number): TSource;
-        elementAtOrDefault(index: number): TSource;
-        except(sequence: Iterable<TSource>): IEnumerable<TSource>;
-        first(predicate?: PredicateFunc<TSource>): TSource;
-        firstOrDefault(predicate: PredicateFunc<TSource>): TSource;
-        groupBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IEnumerable<IGrouping<TKey, TSource>>;
-        groupBy<TKey, TElement = TSource>(keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TElement>): IEnumerable<IGrouping<TKey, TElement>>;
-        groupBy<TKey, TElement = TSource, TResult = TElement>(keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TElement>, resultSelector: GroupResultSelectorFunc<TKey, TElement, TResult>): IEnumerable<IGrouping<TKey, TResult>>;
-        groupJoin<TKey, TInner, TResult>(innerSequence: Iterable<TInner>, outerKeySelector: SelectorFunc<TSource, TKey>, innerKeySelector: SelectorFunc<TInner, TKey>, resultSelector: ResultSelectorFunc<TSource, Iterable<TInner>, TResult>, comparer: EqualityComparerFunc<TKey>): IEnumerable<TResult>;
-        intersect(sequence: Iterable<TSource>): IEnumerable<TSource>;
-        join<TKey, TInner, TResult>(innerSequence: Iterable<TInner>, outerKeySelector: SelectorFunc<TSource, TKey>, innerKeySelector: SelectorFunc<TInner, TKey>, resultSelector: ResultSelectorFunc<TSource, TInner, TResult>, comparer?: EqualityComparerFunc<TKey>): IEnumerable<TResult>;
-        last(predicate: PredicateFunc<TSource>): TSource;
-        lastOrDefault(predicate: PredicateFunc<TSource>): TSource;
-        max(ignoreNonNumberItems?: boolean): number;
-        max(selector?: SelectorFunc<TSource, number>): number;
-        min(ignoreNonNumberItems?: boolean): number;
-        min(selector?: SelectorFunc<TSource, number>): number;
-        ofType<TResult>(type: new () => TResult): IEnumerable<TResult>;
-        orderBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
-        orderByDescending<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
-        prepend(item: TSource): IEnumerable<TSource>;
-        reverse(): IEnumerable<TSource>;
-        select<TResult>(selector: SelectorFunc<TSource, TResult>): IEnumerable<TResult>;
-        selectMany<TResult>(selector: SelectorFunc<TSource, Iterable<TResult>>): IEnumerable<TResult>;
-        sequenceEqual(other: Iterable<TSource>, comparer?: EqualityComparerFunc<TSource>): boolean;
-        single(predicate?: PredicateFunc<TSource>): TSource;
-        singleOrDefault?(predicate: PredicateFunc<TSource>): TSource;
-        skip(count: number): IEnumerable<TSource>;
-        skipLast(count: number): IEnumerable<TSource>;
-        skipWhile(predicate: PredicateFunc<TSource>): IEnumerable<TSource>;
-        sum(ignoreNonNumberItems?: boolean): number;
-        sum(selector?: SelectorFunc<TSource, number>): number;
-        take(count: number): IEnumerable<TSource>;
-        takeLast(count: number): IEnumerable<TSource>;
-        takeWhile(predicate: PredicateFunc<TSource>): IEnumerable<TSource>;
-        toArray(): TSource[];
-        toDictionary<TKey, TValue>(keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TValue>, comparer: EqualityComparerFunc<TKey>): Map<TKey, TValue>;
-        union(sequence: Iterable<TSource>): IEnumerable<TSource>;
-        where(predicate: PredicateFunc<TSource>): IEnumerable<TSource>;
-        zip<TSecond, TResult>(sequence: Iterable<TSecond>, resultSelector: ResultSelectorFunc<TSource, TSecond, TResult>): IEnumerable<TResult>;
-    }
-    interface OrderedIterable<TSource> extends Iterable<TSource> {
-        readonly comparer: ComparerFunc<TSource>;
-    }
-    interface IOrderedEnumerable<TSource> extends IEnumerable<TSource> {
-        thenBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
-        thenByDescending<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
-    }
     abstract class IterableEnumerable<TSource> implements IEnumerable<TSource> {
         abstract [Symbol.iterator](): Iterator<TSource>;
         aggregate<TAccumulate = TSource, TResult = TAccumulate>(func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>): TResult;
@@ -94,6 +29,7 @@ declare namespace Linq {
         except(sequence: Iterable<TSource>): IEnumerable<TSource>;
         first(predicate?: PredicateFunc<TSource>): TSource;
         firstOrDefault(predicate: PredicateFunc<TSource>): TSource;
+        getEnumerator(): IEnumerator<TSource>;
         groupBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IEnumerable<IGrouping<TKey, TSource>>;
         groupBy<TKey, TElement = TSource>(keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TElement>): IEnumerable<IGrouping<TKey, TElement>>;
         groupBy<TKey, TElement = TSource, TResult = TElement>(keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TElement>, resultSelector: GroupResultSelectorFunc<TKey, TElement, TResult>): IEnumerable<IGrouping<TKey, TResult>>;
@@ -132,23 +68,42 @@ declare namespace Linq {
         zip<TSecond, TResult>(sequence: Iterable<TSecond>, resultSelector: ResultSelectorFunc<TSource, TSecond, TResult>): IEnumerable<TResult>;
     }
     class Enumerable<T> extends IterableEnumerable<T> implements IEnumerable<T> {
-        static from<TSource>(source: Iterable<TSource>): IEnumerable<TSource>;
+        static from<TSource>(source: EnumerableSource<TSource>): IEnumerable<TSource>;
+        static fromGenerator<TSource, TResult = TSource, TNext = undefined>(source: () => globalThis.Generator<TSource, TResult, TNext>): Enumerable<TSource>;
         static range(start: number, end: number): IEnumerable<number>;
         static repeat<TResult>(element: TResult, count: number): IEnumerable<TResult>;
         static repeatElement<TResult>(callback: (index: number) => TResult, count: number, userData?: any): IEnumerable<TResult>;
         static empty<TSource>(): IEnumerable<TSource>;
         protected _source: Iterable<T>;
-        constructor(source: Iterable<T> | Iterator<T>);
+        constructor(source: EnumerableSource<T>);
         [Symbol.iterator](): Iterator<T>;
     }
-    class OrderedEnumerable<T> extends Enumerable<T> implements IOrderedEnumerable<T> {
+    class OrderedEnumerable<T> extends IterableEnumerable<T> implements IOrderedEnumerable<T> {
+        protected _source: OrderedIterable<T>;
         constructor(source: OrderedIterable<T>);
         thenBy<TKey>(keySelector: SelectorFunc<T, TKey>): IOrderedEnumerable<T>;
         thenByDescending<TKey>(keySelector: SelectorFunc<T, TKey>): IOrderedEnumerable<T>;
+        [Symbol.iterator](): Iterator<T>;
     }
 }
 declare namespace Linq {
-    abstract class Generator<T> {
+    class Enumerator<T> implements IEnumerator<T> {
+        private _source;
+        private _gen;
+        constructor(source: Iterable<T>);
+        private _createGenerator;
+        next(): IteratorResult<T, any>;
+        return?(value?: T): IteratorResult<T, any>;
+        throw?(e?: any): IteratorResult<T, any>;
+        reset(): void;
+    }
+}
+declare namespace Linq {
+    function isEnumerable(object: any): object is Linq.IEnumerable<any>;
+    function isGroupedEnumerable(object: any): object is Linq.GroupedEnumerable<any, any>;
+}
+declare namespace Linq {
+    abstract class Generator<T> implements Iterable<T> {
         protected _index: number;
         protected _current: T;
         constructor();
@@ -187,9 +142,6 @@ declare namespace Linq {
     }
 }
 declare namespace Linq {
-    interface IGrouping<TKey, TElement> extends IEnumerable<TElement> {
-        readonly key: TKey;
-    }
     class Grouping<TKey, TElement> extends IterableEnumerable<TElement> implements IGrouping<TKey, TElement> {
         #private;
         constructor(key: TKey, elements: Iterable<TElement>);
@@ -215,11 +167,6 @@ declare namespace Linq {
     }
 }
 declare namespace Linq {
-    interface SourceIterator<T> extends Iterable<T> {
-        readonly index: number;
-        readonly current: T;
-        [Symbol.iterator](): Iterator<T>;
-    }
     abstract class BaseIterator<TSource> implements SourceIterator<TSource> {
         protected _index: number;
         protected _current: TSource;
@@ -409,11 +356,87 @@ declare namespace Linq {
     const Version = "0.0.1";
 }
 declare namespace Linq {
+    interface IEnumerator<T> extends Iterator<T, T> {
+        reset(): void;
+    }
+    interface IEnumerable<TSource> extends Iterable<TSource> {
+        aggregate<TAccumulate, TResult = TAccumulate>(func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>): TResult;
+        aggregate<TAccumulate, TResult = TAccumulate>(seed: TAccumulate, func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>): TResult;
+        aggregate<TAccumulate, TResult = TAccumulate>(seed: TAccumulate, func: AccumulatorFunc<TAccumulate, TSource, TAccumulate>, resultSelector: SelectorFunc<TAccumulate, TResult>): TResult;
+        all(predicate: PredicateFunc<TSource>): boolean;
+        any(predicate?: PredicateFunc<TSource>): boolean;
+        append(item: TSource): IEnumerable<TSource>;
+        average(ignoreNonNumberItems?: boolean): number;
+        average(selector?: SelectorFunc<TSource, number>): number;
+        concat(sequence: Iterable<TSource>): IEnumerable<TSource>;
+        contains(value: TSource, comparer?: EqualityComparerFunc<TSource>): boolean;
+        count(predicate?: PredicateFunc<TSource>): number;
+        defaultIfEmpty(defaultValue: TSource): IEnumerable<TSource>;
+        distinct(): IEnumerable<TSource>;
+        elementAt(index: number): TSource;
+        elementAtOrDefault(index: number): TSource;
+        except(sequence: Iterable<TSource>): IEnumerable<TSource>;
+        first(predicate?: PredicateFunc<TSource>): TSource;
+        firstOrDefault(predicate: PredicateFunc<TSource>): TSource;
+        getEnumerator(): IEnumerator<TSource>;
+        groupBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IEnumerable<IGrouping<TKey, TSource>>;
+        groupBy<TKey, TElement = TSource>(keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TElement>): IEnumerable<IGrouping<TKey, TElement>>;
+        groupBy<TKey, TElement = TSource, TResult = TElement>(keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TElement>, resultSelector: GroupResultSelectorFunc<TKey, TElement, TResult>): IEnumerable<IGrouping<TKey, TResult>>;
+        groupJoin<TKey, TInner, TResult>(innerSequence: Iterable<TInner>, outerKeySelector: SelectorFunc<TSource, TKey>, innerKeySelector: SelectorFunc<TInner, TKey>, resultSelector: ResultSelectorFunc<TSource, Iterable<TInner>, TResult>, comparer: EqualityComparerFunc<TKey>): IEnumerable<TResult>;
+        intersect(sequence: Iterable<TSource>): IEnumerable<TSource>;
+        join<TKey, TInner, TResult>(innerSequence: Iterable<TInner>, outerKeySelector: SelectorFunc<TSource, TKey>, innerKeySelector: SelectorFunc<TInner, TKey>, resultSelector: ResultSelectorFunc<TSource, TInner, TResult>, comparer?: EqualityComparerFunc<TKey>): IEnumerable<TResult>;
+        last(predicate: PredicateFunc<TSource>): TSource;
+        lastOrDefault(predicate: PredicateFunc<TSource>): TSource;
+        max(ignoreNonNumberItems?: boolean): number;
+        max(selector?: SelectorFunc<TSource, number>): number;
+        min(ignoreNonNumberItems?: boolean): number;
+        min(selector?: SelectorFunc<TSource, number>): number;
+        ofType<TResult>(type: new () => TResult): IEnumerable<TResult>;
+        orderBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
+        orderByDescending<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
+        prepend(item: TSource): IEnumerable<TSource>;
+        reverse(): IEnumerable<TSource>;
+        select<TResult>(selector: SelectorFunc<TSource, TResult>): IEnumerable<TResult>;
+        selectMany<TResult>(selector: SelectorFunc<TSource, Iterable<TResult>>): IEnumerable<TResult>;
+        sequenceEqual(other: Iterable<TSource>, comparer?: EqualityComparerFunc<TSource>): boolean;
+        single(predicate?: PredicateFunc<TSource>): TSource;
+        singleOrDefault?(predicate: PredicateFunc<TSource>): TSource;
+        skip(count: number): IEnumerable<TSource>;
+        skipLast(count: number): IEnumerable<TSource>;
+        skipWhile(predicate: PredicateFunc<TSource>): IEnumerable<TSource>;
+        sum(ignoreNonNumberItems?: boolean): number;
+        sum(selector?: SelectorFunc<TSource, number>): number;
+        take(count: number): IEnumerable<TSource>;
+        takeLast(count: number): IEnumerable<TSource>;
+        takeWhile(predicate: PredicateFunc<TSource>): IEnumerable<TSource>;
+        toArray(): TSource[];
+        toDictionary<TKey, TValue>(keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TValue>, comparer: EqualityComparerFunc<TKey>): Map<TKey, TValue>;
+        union(sequence: Iterable<TSource>): IEnumerable<TSource>;
+        where(predicate: PredicateFunc<TSource>): IEnumerable<TSource>;
+        zip<TSecond, TResult>(sequence: Iterable<TSecond>, resultSelector: ResultSelectorFunc<TSource, TSecond, TResult>): IEnumerable<TResult>;
+    }
+    interface OrderedIterable<TSource> extends Iterable<TSource> {
+        readonly comparer: ComparerFunc<TSource>;
+    }
+    interface IOrderedEnumerable<TSource> extends IEnumerable<TSource> {
+        thenBy<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
+        thenByDescending<TKey>(keySelector: SelectorFunc<TSource, TKey>): IOrderedEnumerable<TSource>;
+    }
+    interface IGrouping<TKey, TElement> extends IEnumerable<TElement> {
+        readonly key: TKey;
+    }
+    interface SourceIterator<T> extends Iterable<T> {
+        readonly index: number;
+        readonly current: T;
+        [Symbol.iterator](): Iterator<T>;
+    }
     interface ILookup<TKey, TElement> {
         readonly count: number;
         item(key: TKey): Iterable<TElement>;
         contains(key: TKey): boolean;
     }
+}
+declare namespace Linq {
     class Lookup<TKey, TElement, TResult = TElement> implements ILookup<TKey, TResult>, Iterable<IGrouping<TKey, TResult>> {
         private static mapAsGroups;
         static create<TSource, TKey, TElement>(source: Iterable<TSource>, keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TElement>): Lookup<TKey, TElement>;

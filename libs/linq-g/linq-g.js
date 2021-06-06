@@ -1,21 +1,8 @@
 var Linq;
 (function (Linq) {
-    function isEnumerable(object) {
-        return object instanceof IterableEnumerable;
-    }
-    Linq.isEnumerable = isEnumerable;
-    function isGroupedEnumerable(object) {
-        return object instanceof Linq.GroupedEnumerable;
-    }
-    Linq.isGroupedEnumerable = isGroupedEnumerable;
     function isIterator(object) {
         return Reflect.has(object, "next") && typeof Reflect.get(object, "next") === "function";
     }
-    Linq.isIterator = isIterator;
-    function composeComparers(firstComparer, secondComparer) {
-        return (a, b) => firstComparer(a, b) || secondComparer(a, b);
-    }
-    Linq.composeComparers = composeComparers;
     class IteratorIterableWrapper {
         constructor(iterator) {
             this._source = iterator;
@@ -535,6 +522,7 @@ var Linq;
         static zip(source, sequence, selector) {
             var iterator = new Linq.ZipIterator(source, sequence, selector);
             return new Enumerable(iterator);
+            Enumerable.fromGenerator(function* () { yield 1; });
         }
     }
     class IterableEnumerable {
@@ -610,6 +598,9 @@ var Linq;
         }
         firstOrDefault(predicate) {
             return EnumerableExtensions.firstOrDefault(this, predicate);
+        }
+        getEnumerator() {
+            return new Linq.Enumerator(this);
         }
         groupBy(keySelector, elementSelector, resultSelector) {
             return EnumerableExtensions.groupBy(this, keySelector, elementSelector, resultSelector);
@@ -743,6 +734,10 @@ var Linq;
         static from(source) {
             return new Enumerable(source);
         }
+        static fromGenerator(source) {
+            const iterator = source();
+            return new Enumerable(iterator);
+        }
         static range(start, end, step) {
             return EnumerableExtensions.range(start, end, step);
         }
@@ -762,9 +757,10 @@ var Linq;
         }
     }
     Linq.Enumerable = Enumerable;
-    class OrderedEnumerable extends Enumerable {
+    class OrderedEnumerable extends IterableEnumerable {
         constructor(source) {
-            super(source);
+            super();
+            this._source = source;
         }
         thenBy(keySelector) {
             return EnumerableExtensions.thenBy(this._source, keySelector);
@@ -772,8 +768,53 @@ var Linq;
         thenByDescending(keySelector) {
             return EnumerableExtensions.thenByDescending(this._source, keySelector);
         }
+        *[Symbol.iterator]() {
+            for (let item of this._source) {
+                yield item;
+            }
+        }
     }
     Linq.OrderedEnumerable = OrderedEnumerable;
+})(Linq || (Linq = {}));
+var Linq;
+(function (Linq) {
+    class Enumerator {
+        constructor(source) {
+            this._source = source;
+            this._createGenerator();
+        }
+        _createGenerator() {
+            this._gen = (function* (sequence) {
+                for (const item of sequence) {
+                    yield item;
+                }
+            })(this._source);
+        }
+        next() {
+            return this._gen.next();
+        }
+        return(value) {
+            return this._gen.return(value);
+        }
+        throw(e) {
+            return this._gen.throw(e);
+        }
+        reset() {
+            this._createGenerator();
+        }
+    }
+    Linq.Enumerator = Enumerator;
+})(Linq || (Linq = {}));
+var Linq;
+(function (Linq) {
+    function isEnumerable(object) {
+        return object instanceof Linq.IterableEnumerable;
+    }
+    Linq.isEnumerable = isEnumerable;
+    function isGroupedEnumerable(object) {
+        return object instanceof Linq.GroupedEnumerable;
+    }
+    Linq.isGroupedEnumerable = isGroupedEnumerable;
 })(Linq || (Linq = {}));
 var Linq;
 (function (Linq) {
@@ -1611,9 +1652,12 @@ var Linq;
         }
     }
     Linq.OrderByIterator = OrderByIterator;
+    function composeComparers(firstComparer, secondComparer) {
+        return (a, b) => firstComparer(a, b) || secondComparer(a, b);
+    }
     class ThenByIterator extends OrderedIterator {
         constructor(iterable, keySelector, descending = false) {
-            super(iterable, Linq.composeComparers(iterable.comparer, OrderedIterator.createComparer(keySelector, descending)));
+            super(iterable, composeComparers(iterable.comparer, OrderedIterator.createComparer(keySelector, descending)));
         }
     }
     Linq.ThenByIterator = ThenByIterator;
