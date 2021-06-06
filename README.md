@@ -4,7 +4,7 @@ TRY-LINQ è una applicazione web basata sulla libreria [LINQ-G](https://github.c
 
 ![TRY-LINQ](doc/TRY-LINQ.jpg)
 
-E’ possibile caricare dati da file esterni o aprire la finestra di editing per poter modificare i dati correnti. I tipi di dato validi sono JSON Array, JSON Object e Stringhe.
+E’ possibile caricare dati da file esterni o aprire la finestra di editing per poter modificare i dati correnti. Anche se la libreria è in grado di caricare qualunque oggetto che implementi il comportamento di Iterable, tramite l'interfaccia al momento è possibile caricare dati di tipo JSON Array, JSON Object e Stringhe.
 
 ![data-panel](doc/data-panel.jpg)
 
