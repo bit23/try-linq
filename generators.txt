@@ -1,7 +1,0 @@
-
-GENERATORS
-
-- Cosa sono
-- A cosa servono
-- Come si utilizzano
-- LINQ using generators
