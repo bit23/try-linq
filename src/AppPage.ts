@@ -46,27 +46,27 @@ namespace TryLinq {
 
         private _applicationService: Juice.ApplicationService
 
-        private _part_appRoot: HTMLElement;
-        private _part_appToolbar: HTMLElement;
-        private _part_appContent: HTMLElement;
-        private _part_appVersion: HTMLElement;
-		private _part_engineVersion: HTMLElement;
+        private _part_appRoot!: HTMLElement;
+        private _part_appToolbar!: HTMLElement;
+        private _part_appContent!: HTMLElement;
+        private _part_appVersion!: HTMLElement;
+		private _part_engineVersion!: HTMLElement;
 
-        private _appToolbar: AppToolbar;
-        private _appPanelsLayout: AppPanelsLayout;
-        private _dataPanel: AppDataPanel;
-        private _codePanel: AppCodePanel;
-        private _resultsPanel: AppResultsPanel;
+        private _appToolbar!: AppToolbar;
+        private _appPanelsLayout!: AppPanelsLayout;
+        private _dataPanel!: AppDataPanel;
+        private _codePanel!: AppCodePanel;
+        private _resultsPanel!: AppResultsPanel;
 
-        private _btnLayout1: Juice.Button;
-        private _btnLayout2: Juice.Button;
-        private _btnLayout3: Juice.Button;
-        private _btnTheme: Juice.Button;
+        private _btnLayout1!: Juice.Button;
+        private _btnLayout2!: Juice.Button;
+        private _btnLayout3!: Juice.Button;
+        private _btnTheme!: Juice.Button;
 
         private _performance = {
-            enumerableConstruction: <PerformanceEntry>null,
-            enumerableReading: <PerformanceEntry>null,
-            totalTime: <PerformanceEntry>null,
+            enumerableConstruction: <PerformanceEntry><unknown>null,
+            enumerableReading: <PerformanceEntry><unknown>null,
+            totalTime: <PerformanceEntry><unknown>null,
         };
 
         constructor(
@@ -151,7 +151,9 @@ namespace TryLinq {
             this._btnTheme.isToggle = true;
             this._btnTheme.onClick.add(this.onButtonThemeClick, this);
 
-            this._appToolbar.appendToHtmlElement(this._part_appToolbar);
+			if (this._part_appToolbar) {
+            	this._appToolbar.appendToHtmlElement(this._part_appToolbar);
+			}
         }
 
         private initializeAppPanelsLayout() {
@@ -410,9 +412,20 @@ namespace TryLinq {
             p.measure("enumerable reading", "func-executed", "result-loaded");
             p.measure("total time", "start", "result-loaded");
 
-            this._performance.enumerableConstruction = this.getLastArrayItem(p.getEntriesByName("enumerable construction"));
-            this._performance.enumerableReading = this.getLastArrayItem(p.getEntriesByName("enumerable reading"));
-            this._performance.totalTime = this.getLastArrayItem(p.getEntriesByName("total time"));
+			const constructionEntry = this.getLastArrayItem(p.getEntriesByName("enumerable construction"));
+			if (constructionEntry) {
+            	this._performance.enumerableConstruction = constructionEntry;
+			}
+
+			const readingEntry = this.getLastArrayItem(p.getEntriesByName("enumerable reading"));
+			if (readingEntry) {
+            	this._performance.enumerableReading = readingEntry;
+			}
+
+			const totalTimeEntry = this.getLastArrayItem(p.getEntriesByName("total time"));
+			if (totalTimeEntry) {
+            	this._performance.totalTime = totalTimeEntry;
+			}
 
             this.showPerformances();
 

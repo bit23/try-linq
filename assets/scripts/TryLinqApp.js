@@ -327,7 +327,9 @@ var TryLinq;
             this._btnTheme.htmlElement.classList.add("app-button-theme", "app-toolbar-icon-font");
             this._btnTheme.isToggle = true;
             this._btnTheme.onClick.add(this.onButtonThemeClick, this);
-            this._appToolbar.appendToHtmlElement(this._part_appToolbar);
+            if (this._part_appToolbar) {
+                this._appToolbar.appendToHtmlElement(this._part_appToolbar);
+            }
         }
         initializeAppPanelsLayout() {
             this._appPanelsLayout = new TryLinq.AppPanelsLayout();
@@ -539,9 +541,18 @@ var TryLinq;
             p.measure("enumerable construction", "start", "func-executed");
             p.measure("enumerable reading", "func-executed", "result-loaded");
             p.measure("total time", "start", "result-loaded");
-            this._performance.enumerableConstruction = this.getLastArrayItem(p.getEntriesByName("enumerable construction"));
-            this._performance.enumerableReading = this.getLastArrayItem(p.getEntriesByName("enumerable reading"));
-            this._performance.totalTime = this.getLastArrayItem(p.getEntriesByName("total time"));
+            const constructionEntry = this.getLastArrayItem(p.getEntriesByName("enumerable construction"));
+            if (constructionEntry) {
+                this._performance.enumerableConstruction = constructionEntry;
+            }
+            const readingEntry = this.getLastArrayItem(p.getEntriesByName("enumerable reading"));
+            if (readingEntry) {
+                this._performance.enumerableReading = readingEntry;
+            }
+            const totalTimeEntry = this.getLastArrayItem(p.getEntriesByName("total time"));
+            if (totalTimeEntry) {
+                this._performance.totalTime = totalTimeEntry;
+            }
             this.showPerformances();
             this.saveToLocalStorage();
         }

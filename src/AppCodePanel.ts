@@ -39,13 +39,13 @@ namespace TryLinq {
 
         private static readonly DefaultAppCodePanelTemplate = `<style>\n${AppCodePanel.DefaultAppCodePanelStyles}\n</style>\n${AppCodePanel.DefaultAppCodePanelHtmlTemplate}`;
 
-        private _part_layoutRoot: HTMLElement;
-        private _part_content: HTMLElement;
-        private _part_footer: HTMLElement;
-        private _part_buttonsContainer: HTMLElement;
+        private _part_layoutRoot?: HTMLElement;
+        private _part_content?: HTMLElement;
+        private _part_footer?: HTMLElement;
+        private _part_buttonsContainer?: HTMLElement;
 
         private _editor: any;
-        private _btnRun: Juice.Button;
+        private _btnRun?: Juice.Button;
 
         constructor(template?: Juice.TemplateSource) {
             super(template || AppCodePanel.DefaultAppCodePanelTemplate);

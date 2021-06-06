@@ -17,12 +17,12 @@ declare namespace TryLinq {
         protected static readonly DefaultAppCodePanelStyles: string;
         protected static readonly DefaultAppCodePanelHtmlTemplate = "\n    <template template-class=\"AppCodePanel\">\n        <div template-part=\"layoutRoot\" class=\"app-tool-panel\">\n            <div template-part=\"toolbar\" class=\"app-tool-panel-toolbar\"></div>\n            <div template-part=\"content\" class=\"app-tool-panel-content\"></div>\n            <div template-part=\"footer\" class=\"app-code-panel-footer\">\n                <div class=\"app-code-panel-footer-info\">\n                    <span>\n                        <span style=\"display: inline-block; margin-right: 10px;\">Construction &nbsp;<b id=\"enumerableConstruction\">0 ms</b></span>\n                        <span style=\"display: inline-block; margin-right: 10px;\">Reading &nbsp;<b id=\"enumerableReading\">0 ms</b></span>\n                        <span style=\"display: inline-block; margin-right: 10px;\">Total time: &nbsp;<b id=\"totalTime\">0 ms</b></span>\n                    </span>\n                </div>\n                <div template-part=\"buttonsContainer\" class=\"app-code-panel-footer-butttons\">\n                </div>\n            </div>\n        </div>\n    </template>";
         private static readonly DefaultAppCodePanelTemplate;
-        private _part_layoutRoot;
-        private _part_content;
-        private _part_footer;
-        private _part_buttonsContainer;
+        private _part_layoutRoot?;
+        private _part_content?;
+        private _part_footer?;
+        private _part_buttonsContainer?;
         private _editor;
-        private _btnRun;
+        private _btnRun?;
         constructor(template?: Juice.TemplateSource);
         protected initializeTemplate(templatedElement: Juice.TemplatedElement): void;
         get code(): string;
