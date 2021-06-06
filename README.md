@@ -1,25 +1,25 @@
 # TRY-LINQ
 
-TRY-LINQ è una applicazione web basata sulla libreria [LINQ-G](https://github.com/bit23/linq-g), inizialmente sviluppata per testare la libreria stessa ma che ben presto si è trasformata in uno strumento di utilità per eseguire query linq.
+TRY-LINQ is a web application based on the [LINQ-G](https://github.com/bit23/linq-g) library, initially developed to test the library itself but soon turned into a utility tool for performing linq queries.
 
 ![TRY-LINQ](doc/TRY-LINQ.jpg)
 
-E’ possibile caricare dati da file esterni o aprire la finestra di editing per poter modificare i dati correnti. Anche se la libreria è in grado di caricare qualunque oggetto che implementi il comportamento di Iterable, tramite l'interfaccia al momento è possibile caricare dati di tipo JSON Array, JSON Object e Stringhe.
+It's possible to load data from external files or open the editing window in order to modify the current data. Although the library is able to load any object that implements the Iterable behavior, through the interface at the moment it is possible to load data of type JSON Array, JSON Object and String.
 
 ![data-panel](doc/data-panel.jpg)
 
-E’ possibile definire query linq più o meno complesse direttamente nell’editor di codice integrato, in modo da poterne modificare in tempo reale la logica. E’ disponibile anche un elenco di snippets utili per testare ogni funzionalità della libreria.
+It is possible to define more or less complex linq queries directly in the integrated code editor, so you can modify the logic in real time. It is also available a list of useful snippets to test every feature of the library.
 
 ![code-panel](doc/code-panel.jpg)
 
-Nell’ultimo pannello saranno visualizzati i risultati della query applicata ai dati. Sarà inoltre possibile scegliere di utilizzare i risultati come dati di partenza o esportarli se necessario.
+The last panel will display the results of the query applied to the data. It will also be possible to choose to use the results as source data or export them if necessary.
 
 ![result-panel](doc/result-panel.jpg)
 
-Queste sono le funzionalità principali dell’applicazione. Di secondaria importanza sono: il salvataggio automatico su local-storage dei dati inseriti e della ultima query eseguita, la possibilità di modificare il layout dell’applicazione tra tre predefiniti, passare da tema dark a tema light e viceversa.
+These are the main features of the application. Of secondary importance are: the automatic saving on local-storage of the inserted data and of the last executed query, the possibility to modify the layout of the application among three predefined ones, to pass from dark theme to light theme and vice versa.
 
-Per provare l’applicazione:
+To test the application:  
 http://……
 
-Codice sorgente di LINQ-G:
+LINQ-G source code:  
 https://github.com/bit23/linq-g
