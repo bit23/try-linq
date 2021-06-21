@@ -19,7 +19,8 @@ The next panel displays the results of the query applied to the data. You can al
 These are the main features of the application, which also includes:
 - the automatic saving on local-storage of the inserted data and of the last executed query, 
 - the possibility to change the application layout choosing between 3 templates
-- the possibility to pass from the dark theme to the light one and vice versa.
+- the possibility to pass from the dark theme to the light one and vice versa.  
+
 
 To test the application:  
 http://……
