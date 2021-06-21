@@ -4,7 +4,7 @@ TRY-LINQ is a web application based on the [LINQ-G](https://github.com/bit23/lin
 
 ![TRY-LINQ](doc/TRY-LINQ.jpg)
 
-It's possible to load data from external files or open the editing window in order to modify the current data. Although the library is able to load any object that implements the Iterable behavior, through the interface at the moment it is possible to load data of type JSON Array, JSON Object and String.
+It's possible to load data from external files or open the editing window in order to modify the current data. Although the library is able to load any object that implements the Iterable behavior, through the interface at the moment it is possible to load JSON Array, JSON Object and String data.
 
 ![data-panel](doc/data-panel.jpg)
 
