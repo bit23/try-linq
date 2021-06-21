@@ -16,7 +16,10 @@ The next panel displays the results of the query applied to the data. You can al
 
 ![result-panel](doc/result-panel.jpg)
 
-These are the main features of the application. Of secondary importance are: the automatic saving on local-storage of the inserted data and of the last executed query, the possibility to modify the layout of the application among three predefined ones, to pass from dark theme to light theme and vice versa.
+These are the main features of the application, which also includes:
+- the automatic saving on local-storage of the inserted data and of the last executed query, 
+- the possibility to change the application layout choosing between 3 templates
+- the possibility to pass from the dark theme to the light one and vice versa.
 
 To test the application:  
 http://……
