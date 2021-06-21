@@ -8,7 +8,7 @@ It's possible to load data from external files or open the editing window in ord
 
 ![data-panel](doc/data-panel.jpg)
 
-It is possible to define more or less complex linq queries directly in the integrated code editor, so you can modify the logic in real time. It is also available a list of useful snippets to test every feature of the library.
+It is possible to define more or less complex linq queries directly in the integrated code editor, so you can modify the logic in real time. A list of useful snippets is also available to test every feature of the library.
 
 ![code-panel](doc/code-panel.jpg)
 
