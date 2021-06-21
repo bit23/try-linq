@@ -21,6 +21,7 @@ These are the main features of the application, which also includes:
 - the possibility to change the application layout choosing between 3 templates
 - the possibility to pass from the dark theme to the light one and vice versa.  
 
+<br/>
 
 To test the application:  
 http://……
