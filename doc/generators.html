@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <script>
+        class ExampleInfo {
+
+            _description;
+            _entryPoint;
+
+            constructor(description, entryPoint) {
+                this._description = description;
+                this._entryPoint = entryPoint;
+            }
+
+            get description() {
+                return this._description;
+            }
+            get entryPoint() {
+                return this._entryPoint;
+            }
+        }
+
+        const exampleMap = new Map();
+
+        function printResult(value) {
+            console.log(value);
+        }
+
+        // -------------------------------------------------
+        // infinite generator example (single instance)
+        // -------------------------------------------------
+
+        exampleMap.set(
+            "freeId generator",
+            new ExampleInfo(
+                "infinite free id generator example (single instance)",
+                function(args) {
+                    const freeIdGenerator = (function*() {
+                        let id = 0;
+                        while (true) {
+                            yield ++id;
+                        }
+                    })();
+
+                    console.log(freeIdGenerator.next().value);
+                    console.log(freeIdGenerator.next().value);
+                    console.log(freeIdGenerator.next().value);
+                    console.log(freeIdGenerator.next().value);
+                    console.log(freeIdGenerator.next().value);
+                }
+            )
+        );
+
+        // -------------------------------------------------
+        // infinite generator example (potentially multiple instances)
+        // -------------------------------------------------
+
+        exampleMap.set(
+            "freeId generator (multiple)",
+            new ExampleInfo(
+                "infinite free id generator example (potentially multiple instances)",
+                function(args) {
+
+                    function* freeId() {
+                        let id = 0;
+                        while (true) {
+                            yield ++id;
+                        }
+                    }
+
+                    const freeIdGenerator = freeId();
+                    console.log(freeIdGenerator.next().value);
+                    console.log(freeIdGenerator.next().value);
+                    console.log(freeIdGenerator.next().value);
+                    console.log(freeIdGenerator.next().value);
+                    console.log(freeIdGenerator.next().value);
+
+                    const freeIdGenerator2 = freeId();
+                    console.log(freeIdGenerator2.next().value);
+                    console.log(freeIdGenerator2.next().value);
+                    console.log(freeIdGenerator2.next().value);
+
+                }
+            )
+        );
+
+
+
+
+        // -------------------------------------------------
+        // finite generator example (single instance)
+        // -------------------------------------------------
+
+        exampleMap.set(
+            "alphabet generator",
+            new ExampleInfo(
+                "finite generator example (single instance)",
+                function(args) {
+                    const alphabetGenerator = (function*() {
+                        const data = "abcdefghijklmnopqrstuvwxyz";
+                        let index = 0;
+                        while (index < data.length) {
+                            yield data[index++];
+                        }
+                    })();
+
+                    for (const letter of alphabetGenerator) {
+                        console.log(letter);
+                    }
+                }
+            )
+        );
+
+        // -------------------------------------------------
+        // powers generator
+        // -------------------------------------------------
+
+        exampleMap.set(
+            "powers generator",
+            new ExampleInfo(
+                "infinite powers generator",
+                function(args) {
+                    function* powOfGenerator(n) {
+                        let last = 1;
+                        while (true) {
+                            last *= n;
+                            yield last;
+                        }
+                    };
+
+                    const powOf2 = powOfGenerator(2);
+                    console.log(powOf2.next().value); // expected output: 2
+                    console.log(powOf2.next().value); // expected output: 4
+                    console.log(powOf2.next().value); // expected output: 8
+                    console.log(powOf2.next().value); // expected output: 16
+                    console.log(powOf2.next().value); // expected output: 32
+                    console.log(powOf2.next().value); // expected output: 64
+                }
+            )
+        );
+
+        // -------------------------------------------------
+        // powers generator (GeneratorFunction)
+        // -------------------------------------------------
+
+        exampleMap.set(
+            "powers generator (GeneratorFunction)",
+            new ExampleInfo(
+                "infinite powers generator (GeneratorFunction)",
+                function(args) {
+
+                    const GeneratorFunction = Object.getPrototypeOf(function*() {}).constructor;
+                    const powOfGenerator = new GeneratorFunction(
+                        'n',
+                        `let last = 1;
+						while (true) {
+							last *= n;
+							yield last;
+						}`);
+
+                    const powOf2 = powOfGenerator(2);
+                    console.log(powOf2.next().value); // expected output: 2
+                    console.log(powOf2.next().value); // expected output: 4
+                    console.log(powOf2.next().value); // expected output: 8
+                    console.log(powOf2.next().value); // expected output: 16
+                    console.log(powOf2.next().value); // expected output: 32
+                    console.log(powOf2.next().value); // expected output: 64
+                }
+            )
+        );
+
+        // -------------------------------------------------
+        // fibonacci generator
+        // -------------------------------------------------
+
+        exampleMap.set(
+            "fibonacci generator",
+            new ExampleInfo(
+                "infinite fibonacci generator",
+                function(args) {
+
+                    function* fibonacciGenerator() {
+                        let current = 0;
+                        let next = 1;
+                        while (true) {
+                            yield current;
+                            const nn = current + next;
+                            current = next;
+                            next = nn;
+                        }
+                    };
+
+                    const fibonacci = fibonacciGenerator();
+                    console.log(fibonacci.next().value); // expected output: 0
+                    console.log(fibonacci.next().value); // expected output: 1
+                    console.log(fibonacci.next().value); // expected output: 1
+                    console.log(fibonacci.next().value); // expected output: 2
+                    console.log(fibonacci.next().value); // expected output: 3
+                    console.log(fibonacci.next().value); // expected output: 5
+                    console.log(fibonacci.next().value); // expected output: 8
+                    console.log(fibonacci.next().value); // expected output: 13
+                    console.log(fibonacci.next().value); // expected output: 21
+                    console.log(fibonacci.next().value); // expected output: 34
+                    console.log(fibonacci.next().value); // expected output: 55
+                }
+            )
+        );
+
+        // -------------------------------------------------
+
+        //const example = exampleMap.get("powers generator");
+        const example = exampleMap.get("powers generator (GeneratorFunction)");
+        //const example = exampleMap.get("fibonacci generator");
+
+        const entryPoint = example.entryPoint;
+        document.write(entryPoint.toString());
+        entryPoint();
+    </script>
+</head>
+
+<body>
+
+</body>
+
+</html>
