@@ -182,20 +182,10 @@ var Linq;
             return false;
         }
         static count(source, predicate) {
-            if (!predicate) {
-                if (source instanceof Array)
-                    return source.length;
-                return [...source].length;
+            if (source instanceof Enumerable || source instanceof OrderedEnumerable) {
+                return source.count(predicate);
             }
-            else {
-                var count = 0;
-                for (let element of source) {
-                    if (predicate(element)) {
-                        count++;
-                    }
-                }
-                return count;
-            }
+            return Linq.countIterable(source, predicate);
         }
         static defaultIfEmpty(source, defaultValue) {
             let iterator = new Linq.DefaultIfEmptyIterator(source, defaultValue);
@@ -522,7 +512,6 @@ var Linq;
         static zip(source, sequence, selector) {
             var iterator = new Linq.ZipIterator(source, sequence, selector);
             return new Enumerable(iterator);
-            Enumerable.fromGenerator(function* () { yield 1; });
         }
     }
     class IterableEnumerable {
@@ -574,9 +563,6 @@ var Linq;
         }
         contains(value, comparer) {
             return EnumerableExtensions.contains(this, value, comparer);
-        }
-        count(predicate) {
-            return EnumerableExtensions.count(this, predicate);
         }
         defaultIfEmpty(defaultValue) {
             return EnumerableExtensions.defaultIfEmpty(this, defaultValue);
@@ -750,6 +736,9 @@ var Linq;
         static empty() {
             return EnumerableExtensions.empty();
         }
+        count(predicate) {
+            return Linq.countIterable(this._source, predicate);
+        }
         *[Symbol.iterator]() {
             for (let item of this._source) {
                 yield item;
@@ -767,6 +756,9 @@ var Linq;
         }
         thenByDescending(keySelector) {
             return EnumerableExtensions.thenByDescending(this._source, keySelector);
+        }
+        count(predicate) {
+            return Linq.countIterable(this._source, predicate);
         }
         *[Symbol.iterator]() {
             for (let item of this._source) {
@@ -815,6 +807,41 @@ var Linq;
         return object instanceof Linq.GroupedEnumerable;
     }
     Linq.isGroupedEnumerable = isGroupedEnumerable;
+    function countIterable(source, predicate) {
+        if (!predicate) {
+            if (source instanceof Array) {
+                return source.length;
+            }
+            else if (source instanceof Set) {
+                return source.size;
+            }
+            else if (source instanceof Map) {
+                return source.size;
+            }
+            else {
+                let count = 0;
+                for (let element of source) {
+                    count++;
+                }
+                return count;
+            }
+        }
+        else {
+            if (source instanceof Array) {
+                return source.filter(predicate).length;
+            }
+            else {
+                let count = 0;
+                for (let element of source) {
+                    if (predicate(element)) {
+                        count++;
+                    }
+                }
+                return count;
+            }
+        }
+    }
+    Linq.countIterable = countIterable;
 })(Linq || (Linq = {}));
 var Linq;
 (function (Linq) {
@@ -927,6 +954,9 @@ var Linq;
             this.key = key;
             __classPrivateFieldSet(this, _elements, elements);
         }
+        count(predicate) {
+            return Linq.countIterable(__classPrivateFieldGet(this, _elements), predicate);
+        }
         *[(_elements = new WeakMap(), Symbol.iterator)]() {
             for (const element of __classPrivateFieldGet(this, _elements)) {
                 yield element;
@@ -945,11 +975,17 @@ var Linq;
             this._keySelector = keySelector;
             this._elementSelector = elementSelector;
         }
-        *[Symbol.iterator]() {
+        _getOrCreateLookup() {
             if (this._lookup == null) {
                 this._lookup = Linq.Lookup.create(this._source, this._keySelector, this._elementSelector);
             }
-            for (const element of this._lookup) {
+            return this._lookup;
+        }
+        count(predicate) {
+            return Linq.countIterable(this._getOrCreateLookup(), predicate);
+        }
+        *[Symbol.iterator]() {
+            for (const element of this._getOrCreateLookup()) {
                 yield element;
             }
         }
@@ -967,11 +1003,17 @@ var Linq;
             this._elementSelector = elementSelector;
             this._resultSelector = resultSelector;
         }
-        *[Symbol.iterator]() {
+        _getOrCreateLookup() {
             if (this._lookup == null) {
                 this._lookup = Linq.Lookup.create(this._source, this._keySelector, this._elementSelector);
             }
-            for (const element of this._lookup) {
+            return this._lookup;
+        }
+        count(predicate) {
+            return Linq.countIterable(this, predicate);
+        }
+        *[Symbol.iterator]() {
+            for (const element of this._getOrCreateLookup()) {
                 yield this._resultSelector(element.key, element);
             }
         }
@@ -1071,6 +1113,42 @@ var Linq;
         }
     }
     Linq.ConcatIterator = ConcatIterator;
+    class CountIterator extends BaseIterator {
+        constructor(iterable, predicate) {
+            super(iterable);
+            this._computedCount = -1;
+            this._predicate = predicate;
+        }
+        *[Symbol.iterator]() {
+            if (this.iterable instanceof Array) {
+                this._computedCount = this.iterable.length;
+            }
+            else if (this.iterable instanceof Set) {
+                this._computedCount = this.iterable.size;
+            }
+            else if (this.iterable instanceof Map) {
+                this._computedCount = this.iterable.size;
+            }
+            else {
+                let count = 0;
+                for (const element of this.iterable) {
+                    count++;
+                }
+                this._computedCount = count;
+            }
+            for (let element of this.iterable) {
+                this._index++;
+                let valid = this._predicate(element, this.index);
+                if (valid) {
+                    this._current = element;
+                    yield element;
+                }
+            }
+            this.reset();
+        }
+        get count() { return this._computedCount; }
+    }
+    Linq.CountIterator = CountIterator;
     class DefaultIfEmptyIterator extends BaseIterator {
         constructor(iterable, defaultValue) {
             super(iterable);

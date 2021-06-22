@@ -21,7 +21,7 @@ declare namespace Linq {
         average(selector?: SelectorFunc<TSource, number>): number;
         concat(sequence: Iterable<TSource>): IEnumerable<TSource>;
         contains(value: TSource, comparer?: EqualityComparerFunc<TSource>): boolean;
-        count(predicate?: PredicateFunc<TSource>): number;
+        abstract count(predicate?: PredicateFunc<TSource>): number;
         defaultIfEmpty(defaultValue: TSource): IEnumerable<TSource>;
         distinct(): IEnumerable<TSource>;
         elementAt(index: number): TSource;
@@ -76,6 +76,7 @@ declare namespace Linq {
         static empty<TSource>(): IEnumerable<TSource>;
         protected _source: Iterable<T>;
         constructor(source: EnumerableSource<T>);
+        count(predicate: PredicateFunc<T>): number;
         [Symbol.iterator](): Iterator<T>;
     }
     class OrderedEnumerable<T> extends IterableEnumerable<T> implements IOrderedEnumerable<T> {
@@ -83,6 +84,7 @@ declare namespace Linq {
         constructor(source: OrderedIterable<T>);
         thenBy<TKey>(keySelector: SelectorFunc<T, TKey>): IOrderedEnumerable<T>;
         thenByDescending<TKey>(keySelector: SelectorFunc<T, TKey>): IOrderedEnumerable<T>;
+        count(predicate: PredicateFunc<T>): number;
         [Symbol.iterator](): Iterator<T>;
     }
 }
@@ -101,6 +103,7 @@ declare namespace Linq {
 declare namespace Linq {
     function isEnumerable(object: any): object is Linq.IEnumerable<any>;
     function isGroupedEnumerable(object: any): object is Linq.GroupedEnumerable<any, any>;
+    function countIterable<T>(source: Iterable<T>, predicate?: PredicateFunc<T>): number;
 }
 declare namespace Linq {
     abstract class Generator<T> implements Iterable<T> {
@@ -146,6 +149,7 @@ declare namespace Linq {
         #private;
         constructor(key: TKey, elements: Iterable<TElement>);
         readonly key: TKey;
+        count(predicate: PredicateFunc<TElement>): number;
         [Symbol.iterator](): Iterator<TElement>;
     }
     class GroupedEnumerable<TSource, TKey, TElement = TSource> extends IterableEnumerable<IGrouping<TKey, TElement>> implements IEnumerable<IGrouping<TKey, TElement>> {
@@ -154,6 +158,8 @@ declare namespace Linq {
         private readonly _elementSelector;
         private _lookup;
         constructor(source: Iterable<TSource>, keySelector: SelectorFunc<TSource, TKey>, elementSelector?: SelectorFunc<TSource, TElement>);
+        private _getOrCreateLookup;
+        count(predicate: PredicateFunc<IGrouping<TKey, TElement>>): number;
         [Symbol.iterator](): Iterator<IGrouping<TKey, TElement>>;
     }
     class GroupedResultEnumerable<TSource, TKey, TElement, TResult> extends IterableEnumerable<TResult> implements IEnumerable<TResult> {
@@ -163,6 +169,8 @@ declare namespace Linq {
         private readonly _resultSelector;
         private _lookup;
         constructor(source: Iterable<TSource>, keySelector: SelectorFunc<TSource, TKey>, elementSelector: SelectorFunc<TSource, TElement>, resultSelector: GroupResultSelectorFunc<TKey, TElement, TResult>);
+        private _getOrCreateLookup;
+        count(predicate: PredicateFunc<TResult>): number;
         [Symbol.iterator](): Iterator<TResult>;
     }
 }
@@ -200,6 +208,13 @@ declare namespace Linq {
         private _other;
         constructor(iterable: Iterable<T>, other: Iterable<T>);
         [Symbol.iterator](): Iterator<T>;
+    }
+    class CountIterator<T> extends BaseIterator<T> {
+        private _predicate?;
+        private _computedCount;
+        constructor(iterable: Iterable<T>, predicate?: PredicateFunc<T>);
+        [Symbol.iterator](): Iterator<T>;
+        get count(): number;
     }
     class DefaultIfEmptyIterator<T> extends BaseIterator<T> {
         private _defaultValue;
